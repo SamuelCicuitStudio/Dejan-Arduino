@@ -29,7 +29,7 @@ void setup() {
     commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver instance
     sensor->begin(); // Initialize sensor
     commandReceiver->begin(); // Initialize command receiver
-    sensor->SetReadStatus();//set the ready status
+    //sensor->SetReadStatus();//set the ready status
 }
 
 void loop() {
