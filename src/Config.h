@@ -25,4 +25,5 @@
 #define  SENSOR_PIN 2
 #define  ESPITR_PIN 3
 #define  DEFAULT_STOP_TIME 3000
+#define  BAUDE_RATE 115200
 #endif

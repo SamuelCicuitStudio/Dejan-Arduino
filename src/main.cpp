@@ -21,7 +21,7 @@ Sensor* sensor = nullptr; // Initialize sensor pointer
 CommandReceiver* commandReceiver = nullptr; // Command receiver instance
 
 void setup() {
-    Serial.begin(9600); // Initialize serial communication
+    Serial.begin(BAUDE_RATE); // Initialize serial communication
     discMotor.begin(); // Initialize disc motor
     caseMotor.begin(); // Initialize case motor
     

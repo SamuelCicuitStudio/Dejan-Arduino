@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include "CommandReceiver.h"
+#include "Config.h"
 
 // Constructor implementation
 CommandReceiver::CommandReceiver(Sensor* sensor, A4988Manager& motor1, A4988Manager& motor2)
@@ -10,7 +11,7 @@ CommandReceiver::CommandReceiver(Sensor* sensor, A4988Manager& motor1, A4988Mana
 
 // Initialize the receiver
 void CommandReceiver::begin() {
-    Serial.begin(9600); // Start serial communication
+    Serial.begin(BAUDE_RATE); // Start serial communication
 }
 
 // Check and process commands if data is available
