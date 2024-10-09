@@ -1,0 +1,31 @@
+{
+    "command": "STARTSYSTEM"
+}
+
+{
+    "command": "STARTSYSTEM"
+}
+
+
+{
+    "command": "motor",
+    "motorType": "motorCase",
+    "speed": 120.5,
+    "microsteps": 16,
+    "direction": 1
+}
+
+
+{
+    "command": "motor",
+    "motorType": "motorDisc",
+    "speed": 150.0,
+    "microsteps": 8,
+    "direction": 0
+}
+,
+{
+    "command": "sensor",
+    "stop": 1000,
+    "stepstotake": 200
+}
