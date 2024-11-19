@@ -12,7 +12,6 @@ public:
     void update();
     void SetStopTime(int value);
     void SetStepsToTake(int value);
-    void SetReadStatus();
 
     
     static void handleInterrupt(); // Interrupt handler should be static

@@ -38,14 +38,16 @@ void CommandReceiver::receiveCommand(const String& command) {
     DeserializationError error = deserializeJson(doc, command);
 
     if (error) {
-        //Serial.print("JSON deserialization failed: ");
-        //Serial.println(error.c_str());
+        // Deserialization failed, return
+        Serial.print("JSON deserialization failed: ");
+        Serial.println(error.c_str());
         return; // Exit if there is an error
     }
 
     // Process the commands based on the JSON structure
     if (!doc.containsKey("command")) {
-        //Serial.println("Invalid command: 'command' field missing");
+        // Command is invalid if 'command' field is missing
+        Serial.println("Invalid command: 'command' field missing");
         return; // Ignore if no "command" field exists
     }
 
@@ -73,7 +75,7 @@ void CommandReceiver::receiveCommand(const String& command) {
         // Ensure necessary motor parameters are present
         if (doc.containsKey("motorType") && doc.containsKey("speed") && doc.containsKey("microsteps") && doc.containsKey("direction")) {
             String motor = doc["motorType"];
-            int speed = doc["speed"];
+            float speed = doc["speed"];
             int microsteps = doc["microsteps"];
             int direction = doc["direction"];
 
@@ -118,8 +120,7 @@ void CommandReceiver::setMotorParameters(int motor, float speed, int microsteps,
 
     // Set direction (assuming 1 for forward and 0 for backward)
     selectedMotor.SetDirPin(direction);
-    selectedMotor.Reset();// reset the driver of that motor
-    // Start stepping
+    selectedMotor.Reset(); // Reset the driver of that motor
     selectedMotor.Start(); // Start that motor Driver
     selectedMotor.startStepping(); // Start stepping the motor
 }

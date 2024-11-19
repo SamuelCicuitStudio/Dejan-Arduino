@@ -26,8 +26,6 @@ stepsToTake = value;
 
 void Sensor::begin() {
     pinMode(_pin, INPUT_PULLUP); // Configure pin as input with pull-up resistor
-    pinMode(ESPITR_PIN,OUTPUT);
-    digitalWrite(ESPITR_PIN,HIGH);//set not ready status
     attachInterrupt(digitalPinToInterrupt(_pin), handleInterrupt, FALLING); // Attach interrupt
 }
 
@@ -46,9 +44,6 @@ void Sensor::handleInterrupt() {
         interruptActive = true; // Set the interrupt as active
     }
 }
-void SetReadStatus(){
-    digitalWrite(ESPITR_PIN,LOW);
-};
 
 void Sensor::update() {
     if (interruptActive) {
