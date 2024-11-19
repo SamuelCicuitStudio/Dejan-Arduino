@@ -113,14 +113,23 @@ void A4988Manager::setStepResolution(int resolution) {
  * @param speed The speed in Hz.
  */
 void A4988Manager::setSpeed(float speed) {
-    _frequency = speed;                             // Store the desired frequency (in Hz)
-    _interval = (speed > 0) ? (1000000.0 / speed) : 0;  // Calculate the interval between steps in microseconds
-    
+    // Store the desired frequency (in Hz)
+    _frequency = speed;
+
+    // If speed is 0 Hz, set the interval to the highest possible value (e.g., a very large number)
+    // Otherwise, calculate the interval between steps in microseconds
+    if (speed > 0) {
+        _interval = 1000000.0 / speed;  // Calculate the interval for positive speeds
+    } else {
+        _interval = UINT64_MAX;  // Set to the highest possible interval for 0 Hz (max 32-bit unsigned value)
+    }
+
     // Reconfigure the timer alarm with the updated interval
     if (_timerGroup != -1 && _timerIdx != -1) {
         timer_set_alarm_value(_timerGroup, _timerIdx, _interval);  // Update the timer alarm value
     }
 }
+
 
 
 /**

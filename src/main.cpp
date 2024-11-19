@@ -37,7 +37,8 @@ void setup() {
     // Serial Communication Setup
     // ==================================================
     Serial.begin(BAUDE_RATE); // Initialize serial communication with the defined baud rate
-
+    pinMode(FLAG_LED_PIN,OUTPUT);
+    digitalWrite(FLAG_LED_PIN,HIGH);
     // ==================================================
     // Motor Initialization
     // ==================================================
