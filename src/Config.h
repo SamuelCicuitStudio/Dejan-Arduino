@@ -7,7 +7,7 @@
 
 #define DIR_PIN_CASE        42     // Direction Pin for Stepper Motor (Case)
 #define STEP_PIN_CASE       41     // Step Pin for Stepper Motor (Case)
-#define ENABLE_PIN_CASE     25     // Enable Pin for Stepper Motor (Case)
+#define ENABLE_PIN_CASE     35     // Enable Pin for Stepper Motor (Case)
 
 // =========================================================================
 // Microstepping Pins for Case Configuration
