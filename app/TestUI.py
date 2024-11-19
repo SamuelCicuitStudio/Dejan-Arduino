@@ -42,6 +42,11 @@ def send_start_system():
     command = json.dumps({"command": "STARTSYSTEM"})
     send_command(command)
 
+# Function to create and send stop system command
+def send_stop_system():
+    command = json.dumps({"command": "STOPSYSTEM"})
+    send_command(command)
+
 # Function to create and send motor command
 def send_motor_command():
     motor_type = motor_type_combobox.get()
@@ -89,7 +94,11 @@ baudrate.grid(row=1, column=1, padx=10, pady=5)
 
 # Send "Start System" command button
 start_button = ttk.Button(root, text="Start System", command=send_start_system)
-start_button.grid(row=2, column=0, columnspan=2, pady=10)
+start_button.grid(row=2, column=0, pady=10)
+
+# Send "Stop System" command button
+stop_button = ttk.Button(root, text="Stop System", command=send_stop_system)
+stop_button.grid(row=2, column=1, pady=10)
 
 # Motor Control Section
 ttk.Label(root, text="Motor Type:").grid(row=3, column=0, padx=10, pady=5)
