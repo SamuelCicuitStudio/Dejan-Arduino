@@ -10,7 +10,7 @@ public:
     // Constructor for the A4988Manager
     A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                  uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                 uint8_t slpPin, uint8_t resetPin,bool _Number);
+                 uint8_t slpPin, uint8_t resetPin,bool _Number,volatile bool * risingEdgeDetected,volatile bool * semaphore);
 
     void begin();
     void setMicrostepping(int ms1, int ms2, int ms3);
@@ -32,7 +32,8 @@ public:
     uint32_t GetStepsToTake();
     void SetStopTime(int value);
     void SetStepsToTake(int value);
-    
+    volatile bool * risingEdgeDetected;
+    volatile bool * semaphore;
 
 
 private:

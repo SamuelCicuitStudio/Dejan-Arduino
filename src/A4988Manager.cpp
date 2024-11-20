@@ -1,16 +1,8 @@
 #include "A4988Manager.h"
 #include <Arduino.h>
 
-volatile bool risingEdgeDetected = false;  // Flag to indicate a rising edge has been detected
 
-// Interrupt Service Routine (ISR) to detect rising edge
-void IRAM_ATTR risingEdgeISR() {
-    if(digitalRead(SENSOR_PIN)) {
-     risingEdgeDetected = true;  // Set the flag when rising edge is detected
-   }else {
-    risingEdgeDetected = false;
-    }
-}
+
 /**
  * @brief Constructor for the A4988Manager class
  * 
@@ -28,10 +20,12 @@ void IRAM_ATTR risingEdgeISR() {
  */
 A4988Manager::A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                            uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                           uint8_t slpPin, uint8_t resetPin,bool _Number)
+                           uint8_t slpPin, uint8_t resetPin,bool _Number,
+                           volatile bool * risingEdgeDetected,volatile bool * semaphore)
     : _stepPin(stepPin), _dirPin(dirPin), _enablePin(enablePin),
       _ms1Pin(ms1Pin), _ms2Pin(ms2Pin), _ms3Pin(ms3Pin),
-      _slpPin(slpPin), _resetPin(resetPin),_Number(_Number),
+      _slpPin(slpPin), _resetPin(resetPin),_Number(_Number),risingEdgeDetected(risingEdgeDetected),
+      semaphore(semaphore),
       _stepping(false), _frequency(0), _interval(0), _lastStepTime(0),
       _microSteps(1), _stepTaskHandle(nullptr) {}
 
@@ -50,7 +44,7 @@ void A4988Manager::begin() {
     pinMode(_ms3Pin, OUTPUT);
     pinMode(_slpPin, OUTPUT);
     pinMode(_resetPin, OUTPUT);
-    attachInterrupt(digitalPinToInterrupt(SENSOR_PIN), risingEdgeISR, CHANGE);// interrupt for sensor pin
+
     Stop(); // Disable the driver
     digitalWrite(_slpPin, HIGH); // Wake up the driver
     Reset(); // Reset the driver
@@ -245,14 +239,19 @@ void A4988Manager::motorStepTask(void *pvParameters) {
 
         } else if (motor->_Number) {
             while(true){
-                digitalWrite(motor->_stepPin, LOW);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                digitalWrite(motor->_stepPin, HIGH);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                if(risingEdgeDetected) break;
+                if(!motor->semaphore){
+                    STEP01:
+                    digitalWrite(motor->_stepPin, LOW);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    digitalWrite(motor->_stepPin, HIGH);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    if(motor->semaphore) continue;
+                    if(motor->risingEdgeDetected) goto STEP02;
+                }
             };
             // Detect rising edge (LOW -> HIGH)
-            if (risingEdgeDetected ) {
+            if (motor->risingEdgeDetected && !motor->semaphore) {
+                STEP02:
                 // Confirm we are out of the switching zone by making a few steps
                 for (int i = 0; i < motor->stepsToTake; i++) {
                     digitalWrite(motor->_stepPin, LOW);
@@ -264,11 +263,14 @@ void A4988Manager::motorStepTask(void *pvParameters) {
 
             };
             while(true){
-                digitalWrite(motor->_stepPin, LOW);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                digitalWrite(motor->_stepPin, HIGH);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                if(!risingEdgeDetected) break;
+                if(!motor->semaphore){
+                    digitalWrite(motor->_stepPin, LOW);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    digitalWrite(motor->_stepPin, HIGH);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    if(motor->semaphore) continue;
+                    if(!motor->risingEdgeDetected) goto STEP01;
+                }
             }
             
             }
