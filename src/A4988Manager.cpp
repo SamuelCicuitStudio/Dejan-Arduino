@@ -224,7 +224,6 @@ void A4988Manager::stopMotorTask() {
  */
 void A4988Manager::motorStepTask(void *pvParameters) {
     A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
-    bool previousState = digitalRead(SENSOR_PIN);  // Initial pin state
     Serial.println("Motor Step Task Started");
     // Task loop for motor stepping
     while (true) {
@@ -237,50 +236,51 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
 
         } else if (motor->_Number) {
-            bool currentState = digitalRead(SENSOR_PIN);
-            while(true){                
-                if(currentState  == HIGH && previousState == LOW){
+            bool previousState = digitalRead(SENSOR_PIN);  // Initial pin state
+            bool currentState;
+            unsigned long  prevItr=0;
+            if(previousState == true) goto end;
+            while(true){    
+                currentState = digitalRead(SENSOR_PIN);            
+                if(currentState  == true && previousState == false){
                     previousState = currentState;
                     risingEdgeDetected = true;
                     Serial.println("Rising Edge Detected");
+                    // Confirm we are out of the switching zone by making a few steps
+                    for (int i = 0; i < motor->_stepsToTake; i++) {
+                        digitalWrite(motor->_stepPin, LOW);
+                        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                        digitalWrite(motor->_stepPin, HIGH);
+                        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    };
+                    prevItr = motor->_interval;// store intr
+                    motor->_interval = motor->_StopTime;// intervall equal stoptime
                 };
                 digitalWrite(motor->_stepPin, LOW);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                motor->_interval = prevItr;//resume the previous itr
                 digitalWrite(motor->_stepPin, HIGH);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                if(risingEdgeDetected) break;
-            };
-            // Detect rising edge (LOW -> HIGH)
-            if (risingEdgeDetected ) {
-                Serial.println("Performing Steps After Rising Edge");
-                // Confirm we are out of the switching zone by making a few steps
-                for (int i = 0; i < motor->_stepsToTake; i++) {
+                do {
+                    end:
+                    // Set the step pin LOW
                     digitalWrite(motor->_stepPin, LOW);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    digitalWrite(motor->_stepPin, HIGH);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                };
-                vTaskDelay(motor->_StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
-                Serial.println("Completed Steps After Rising Edge");
+                    // Wait for the next interval
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);
 
+                    // Set the step pin HIGH
+                    digitalWrite(motor->_stepPin, HIGH);
+                    // Wait for the next interval
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);
+
+                } while (digitalRead(SENSOR_PIN) == true);
+
+                // Update the previous state
+                previousState = false;                
             };
-            while(true){
-                currentState = digitalRead(SENSOR_PIN) ;
-                if(currentState == LOW && previousState == HIGH){
-                    previousState = currentState;
-                    risingEdgeDetected = false;
-                    Serial.println("Falling Edge Detected");
-                };
-                digitalWrite(motor->_stepPin, LOW);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                digitalWrite(motor->_stepPin, HIGH);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                if(!risingEdgeDetected) break;
-            }
-            
-            }
         }
     }
+}
 
 
 
