@@ -238,29 +238,34 @@ void A4988Manager::motorStepTask(void *pvParameters) {
         } else if (motor->_Number) {
             bool previousState = digitalRead(SENSOR_PIN);  // Initial pin state
             bool currentState;
-            unsigned long  prevItr=0;
+            bool SkipFlag = false;
+            unsigned long  prevItr=motor->_interval;
             if(previousState == true) goto end;
             while(true){    
-                currentState = digitalRead(SENSOR_PIN);            
-                if(currentState  == true && previousState == false){
-                    previousState = currentState;
-                    risingEdgeDetected = true;
-                    Serial.println("Rising Edge Detected");
-                    // Confirm we are out of the switching zone by making a few steps
-                    for (int i = 0; i < motor->_stepsToTake; i++) {
-                        digitalWrite(motor->_stepPin, LOW);
-                        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                        digitalWrite(motor->_stepPin, HIGH);
-                        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                while(true){
+                    currentState = digitalRead(SENSOR_PIN);            
+                    if(currentState  == true && previousState == false){
+                        previousState = currentState;
+                        risingEdgeDetected = true;
+                        Serial.println("Rising Edge Detected");
+                        // Confirm we are out of the switching zone by making a few steps
+                        for (int i = 0; i < motor->_stepsToTake; i++) {
+                            digitalWrite(motor->_stepPin, LOW);
+                            vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                            digitalWrite(motor->_stepPin, HIGH);
+                            vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                        };
+                        prevItr = motor->_interval;// store intr
+                     motor->_interval = motor->_StopTime;// intervall equal stoptime
+                     SkipFlag = true;// skip flag false
                     };
-                    prevItr = motor->_interval;// store intr
-                    motor->_interval = motor->_StopTime;// intervall equal stoptime
+                    digitalWrite(motor->_stepPin, LOW);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    motor->_interval = prevItr;//resume the previous itr
+                    digitalWrite(motor->_stepPin, HIGH);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    if(SkipFlag) break;// break if the skip flag is set
                 };
-                digitalWrite(motor->_stepPin, LOW);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                motor->_interval = prevItr;//resume the previous itr
-                digitalWrite(motor->_stepPin, HIGH);
-                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
                 do {
                     end:
                     // Set the step pin LOW
@@ -276,7 +281,9 @@ void A4988Manager::motorStepTask(void *pvParameters) {
                 } while (digitalRead(SENSOR_PIN) == true);
 
                 // Update the previous state
-                previousState = false;                
+                previousState = false;  
+                prevItr=motor->_interval;
+                SkipFlag = false;// reset skip flag          
             };
         }
     }
