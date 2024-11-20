@@ -200,7 +200,7 @@ stop_button.grid(row=3, column=1, pady=10)
 
 # Motor Control Section for Case Motor
 ttk.Label(root, text="Case Motor Speed:").grid(row=4, column=0, padx=10, pady=5)
-motor_speed_slider_case = tk.Scale(root, from_=0, to=100, orient="horizontal")
+motor_speed_slider_case = tk.Scale(root, from_=1, to=300, orient="horizontal")
 motor_speed_slider_case.set(50)
 motor_speed_slider_case.grid(row=4, column=1, padx=10, pady=5)
 
@@ -220,7 +220,7 @@ send_case_motor_button.grid(row=7, column=0, columnspan=2, pady=10)
 
 # Motor Control Section for Disc Motor
 ttk.Label(root, text="Disc Motor Speed:").grid(row=8, column=0, padx=10, pady=5)
-motor_speed_slider_disc = tk.Scale(root, from_=0, to=100, orient="horizontal")
+motor_speed_slider_disc = tk.Scale(root, from_=1, to=300, orient="horizontal")
 motor_speed_slider_disc.set(50)
 motor_speed_slider_disc.grid(row=8, column=1, padx=10, pady=5)
 

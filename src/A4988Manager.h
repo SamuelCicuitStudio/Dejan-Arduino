@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <FreeRTOS.h>
+#include "Config.h"
 
 class A4988Manager {
 public:

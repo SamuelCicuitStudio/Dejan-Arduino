@@ -42,6 +42,7 @@
 #define SLP_PIN_DISC        9      // Sleep Pin for Stepper Motor (Disc)
 #define RESET_PIN_DISC      47     // Reset Pin for Stepper Motor (Disc)
 #define DEFAULT_FREQ  50
+#define STEP_CORE 0
 // =========================================================================
 // Sensor and Communication Pin Definitions
 // =========================================================================

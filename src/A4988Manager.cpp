@@ -182,7 +182,7 @@ uint8_t A4988Manager::getStepResolution() {
  */
 void A4988Manager::startMotorTask() {
     if (_stepTaskHandle == nullptr) {
-        xTaskCreatePinnedToCore(motorStepTask, "Motor Step Task", 1024, this, 1, &_stepTaskHandle, 0);
+        xTaskCreatePinnedToCore(motorStepTask, "Motor Step Task", 1024, this, 1, &_stepTaskHandle, STEP_CORE);
     }
 }
 
