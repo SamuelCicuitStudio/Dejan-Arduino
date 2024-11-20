@@ -23,3 +23,4 @@ Sensor::Sensor(int pin)
 void Sensor::begin() {
     pinMode(_pin, INPUT); // Configure the sensor pin as input 
 }
+

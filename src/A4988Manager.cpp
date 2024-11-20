@@ -1,6 +1,7 @@
 #include "A4988Manager.h"
 #include <Arduino.h>
 
+volatile bool risingEdgeDetected = false;  // Flag to indicate a rising edge has been detected
 
 
 /**
@@ -20,12 +21,10 @@
  */
 A4988Manager::A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                            uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                           uint8_t slpPin, uint8_t resetPin,bool _Number,
-                           volatile bool * risingEdgeDetected,volatile bool * semaphore)
+                           uint8_t slpPin, uint8_t resetPin,bool _Number)
     : _stepPin(stepPin), _dirPin(dirPin), _enablePin(enablePin),
       _ms1Pin(ms1Pin), _ms2Pin(ms2Pin), _ms3Pin(ms3Pin),
-      _slpPin(slpPin), _resetPin(resetPin),_Number(_Number),risingEdgeDetected(risingEdgeDetected),
-      semaphore(semaphore),
+      _slpPin(slpPin), _resetPin(resetPin),_Number(_Number),
       _stepping(false), _frequency(0), _interval(0), _lastStepTime(0),
       _microSteps(1), _stepTaskHandle(nullptr) {}
 
@@ -238,20 +237,20 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
 
         } else if (motor->_Number) {
-            while(true){
-                if(!motor->semaphore){
-                    STEP01:
-                    digitalWrite(motor->_stepPin, LOW);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    digitalWrite(motor->_stepPin, HIGH);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    if(motor->semaphore) continue;
-                    if(motor->risingEdgeDetected) goto STEP02;
-                }
+            bool currentState = digitalRead(SENSOR_PIN);
+            while(true){                
+                if(currentState  == HIGH && previousState == LOW){
+                    previousState = currentState;
+                    risingEdgeDetected = true;
+                };
+                digitalWrite(motor->_stepPin, LOW);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                digitalWrite(motor->_stepPin, HIGH);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                if(risingEdgeDetected) break;
             };
             // Detect rising edge (LOW -> HIGH)
-            if (motor->risingEdgeDetected && !motor->semaphore) {
-                STEP02:
+            if (risingEdgeDetected ) {
                 // Confirm we are out of the switching zone by making a few steps
                 for (int i = 0; i < motor->stepsToTake; i++) {
                     digitalWrite(motor->_stepPin, LOW);
@@ -263,14 +262,16 @@ void A4988Manager::motorStepTask(void *pvParameters) {
 
             };
             while(true){
-                if(!motor->semaphore){
-                    digitalWrite(motor->_stepPin, LOW);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    digitalWrite(motor->_stepPin, HIGH);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    if(motor->semaphore) continue;
-                    if(!motor->risingEdgeDetected) goto STEP01;
-                }
+                currentState = digitalRead(SENSOR_PIN) ;
+                if(currentState == LOW && previousState == HIGH){
+                    previousState = currentState;
+                    risingEdgeDetected = false;
+                };
+                digitalWrite(motor->_stepPin, LOW);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                digitalWrite(motor->_stepPin, HIGH);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                if(!risingEdgeDetected) break;
             }
             
             }

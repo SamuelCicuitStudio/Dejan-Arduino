@@ -47,7 +47,7 @@
 // Sensor and Communication Pin Definitions
 // =========================================================================
 #define SENSOR_PIN          18     // Sensor Pin
-#define  DEFAULT_STEPS_TO_TAKE  1000   // Number of steps to take when the sensor is triggered
+#define  DEFAULT_STEPS_TO_TAKE  100   // Number of steps to take when the sensor is triggered
 #define  DEFAULT_STOP_TIME  1000      // Time to stop in milliseconds
 // =========================================================================
 // Display Communication Pins
