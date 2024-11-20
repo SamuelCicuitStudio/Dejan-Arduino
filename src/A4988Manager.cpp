@@ -247,6 +247,7 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             // Detect rising edge (LOW -> HIGH)
             if (previousState == LOW && currentState == HIGH) {
                 motor->SetStopFlag();  // Set the stop flag for motor
+                vTaskDelay(10 * portTICK_PERIOD_MS);  // Wait 10ms debounce
             }
 
             // Update previous state to current state for next loop
