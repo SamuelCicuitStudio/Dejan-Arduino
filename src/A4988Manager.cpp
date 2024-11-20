@@ -206,25 +206,18 @@ void A4988Manager::stopMotorTask() {
  *
  * This function runs in a FreeRTOS task loop and controls the stepping of the motor connected
  * to the specified step pin. It monitors a sensor pin for a rising edge signal to trigger
- * the motor to pause for a specified stop time. The motor continues stepping normally unless
- * a rising edge is detected, in which case the stop flag is set, and the motor steps for a specified
- * number of pulses before pausing. After completing the pause, the motor resumes normal stepping.
+ * the motor to pause for a specified stop time. After detecting the rising edge, the motor will 
+ * perform a short series of steps to confirm that it is out of the switching zone before continuing 
+ * with normal stepping.
  *
- * The behavior of the motor differs depending on the motor's number:
+ * The motor behavior differs depending on the motor's number:
  * - For motor 0 (`motor->_Number == false`), the motor steps continuously with no additional logic.
  * - For motor 1 (`motor->_Number == true`), the motor checks for a rising edge on the sensor pin.
- *   - When a rising edge is detected, the motor pauses after completing a set number of steps.
- *   - After the pause, the motor resumes normal stepping, unless the stop flag is set again.
+ *   - When a rising edge is detected, the motor performs a short series of steps to exit the switching zone,
+ *     waits for a debounce period, and then resumes normal stepping.
  *
  * @param pvParameters A pointer to the A4988Manager instance that controls the motor.
  *                     This parameter is passed to the task and provides access to motor-specific settings.
- *
- * @note The function runs continuously in a task, and the motor stepping is controlled by the
- *       interval (`motor->_interval`) and stop time (`motor->StopTime`). The motor behavior can
- *       be dynamically modified by setting the stop flag (`motor->_StopFlag`).
- *
- * @warning Ensure that the sensor pin used for rising edge detection (`SENSOR_PIN`) is connected
- *          to the appropriate GPIO pin and that the sensor provides a clean rising edge signal.
  */
 void A4988Manager::motorStepTask(void *pvParameters) {
     A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
@@ -247,7 +240,17 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             // Detect rising edge (LOW -> HIGH)
             if (previousState == LOW && currentState == HIGH) {
                 motor->SetStopFlag();  // Set the stop flag for motor
-                vTaskDelay(10 * portTICK_PERIOD_MS);  // Wait 10ms debounce
+
+                // Confirm we are out of the switching zone by making a few steps
+                for (int i = 0; i <= 200; i++) {
+                    digitalWrite(motor->_stepPin, LOW);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    digitalWrite(motor->_stepPin, HIGH);
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                }
+
+                // Wait for a debounce period to stabilize (10ms)
+                vTaskDelay(10 * portTICK_PERIOD_MS);
             }
 
             // Update previous state to current state for next loop
@@ -280,6 +283,7 @@ void A4988Manager::motorStepTask(void *pvParameters) {
         }
     }
 }
+
 
 
 
