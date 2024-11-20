@@ -45,7 +45,7 @@ void CommandReceiver::receiveCommand(const String& command) {
     }
 
     // Process the commands based on the JSON structure
-    if (!doc.containsKey("command")) {
+    if (!doc["command"].is<const char*>()) {
         // Command is invalid if 'command' field is missing
         Serial.println("Invalid command: 'command' field missing");
         return; // Ignore if no "command" field exists
@@ -73,7 +73,7 @@ void CommandReceiver::receiveCommand(const String& command) {
 
     } else if (strcmp(cmdType, "motor") == 0) {
         // Ensure necessary motor parameters are present
-        if (doc.containsKey("motorType") && doc.containsKey("speed") && doc.containsKey("microsteps") && doc.containsKey("direction")) {
+        if (doc["motorType"].is<String>() && doc["speed"].is<float>() && doc["microsteps"].is<int>() && doc["direction"].is<int>()) {
             String motor = doc["motorType"];
             float speed = doc["speed"];
             int microsteps = doc["microsteps"];
@@ -88,7 +88,7 @@ void CommandReceiver::receiveCommand(const String& command) {
 
     } else if (strcmp(cmdType, "sensor") == 0) {
         // Ensure necessary sensor parameters are present
-        if (doc.containsKey("stop") && doc.containsKey("stepstotake")) {
+        if (doc["key"].is<int>() && doc["stepstotake"].is<int>()) {
             int stopTime = doc["stop"];
             int stepsToTake = doc["stepstotake"];
 
@@ -144,24 +144,24 @@ void CommandReceiver::sendSystemStatus() {
     doc["status"] = "ok";
 
     // Motor case parameters
-    JsonObject motorCase = doc.createNestedObject("motorCase");
+    JsonObject motorCase = doc["motorCase"].to<JsonObject>();
     motorCase["speed"] = _motor1.getSpeed(); // Assuming you have a getter method in A4988Manager to get the speed
     motorCase["microsteps"] = _motor1.getStepResolution(); // Assuming getter for microsteps
     motorCase["direction"] = _motor1.getDir(); // Assuming getter for direction
 
     // Motor disc parameters
-    JsonObject motorDisc = doc.createNestedObject("motorDisc");
+    JsonObject motorDisc = doc["motorDisc"].to<JsonObject>();
     motorDisc["speed"] = _motor2.getSpeed(); // Same assumptions as above
     motorDisc["microsteps"] = _motor2.getStepResolution();
     motorDisc["direction"] = _motor2.getDir();
 
     // Sensor parameters
-    JsonObject Sensor = doc.createNestedObject("sensor");
+    JsonObject Sensor = doc["sensor"].to<JsonObject>();
     Sensor["stop"] = sensor->GetStopTime(); // Assuming GetStopTime is a method in Sensor class
     Sensor["stepsToTake"] = sensor->GetStepsToTake(); // Assuming GetStepsToTake is a method in Sensor class
 
     // System status
-    JsonObject system = doc.createNestedObject("system");
+    JsonObject system = doc["system"].to<JsonObject>();
     system["status"] = "active"; // Or whatever the current system status is
     system["lastCommand"] = "STARTSYSTEM"; // The last command that was executed, could be dynamically updated
 
