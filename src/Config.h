@@ -47,8 +47,8 @@
 // Sensor and Communication Pin Definitions
 // =========================================================================
 #define SENSOR_PIN          18     // Sensor Pin
-#define  STEPS_TO_TAKE  100   // Number of steps to take when the sensor is triggered
-#define  STOP_TIME  5000      // Time to stop in milliseconds
+#define  DEFAULT_STEPS_TO_TAKE  1000   // Number of steps to take when the sensor is triggered
+#define  DEFAULT_STOP_TIME  1000      // Time to stop in milliseconds
 // =========================================================================
 // Display Communication Pins
 // =========================================================================
@@ -67,7 +67,6 @@
 // General Configuration Settings
 // =========================================================================
 #define FLAG_LED_PIN        16     // Pin for Status LED
-#define DEFAULT_STOP_TIME   3000   // Default Stop Time in milliseconds
 #define BAUDE_RATE          115200 // Baud Rate for Serial Communication
 
 #endif

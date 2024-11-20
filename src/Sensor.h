@@ -10,27 +10,20 @@ public:
     Sensor(int pin, A4988Manager &motor);
     
     void begin();
-    void update();
-    void SetStopTime(int value);
-    void SetStepsToTake(int value);
-    uint32_t GetStopTime();
-    uint32_t GetStepsToTake();
 
-    
-    static void handleInterrupt(); // Interrupt handler should be static
+
+    // Function to start the FreeRTOS monitoring task
+    void startMonitoringTask();
 
 private:
     int _pin;
     A4988Manager *_motor; // Non-static pointer to the motor instance
-    static int stepsToTake ;
-    static unsigned long interruptStartTime;
-    static bool interruptActive;
-    static int currentStep;
-    static int delayBetweenSteps;
-    static unsigned long lastStepTime;
-    static int originalSpeed;
-    int StopTime; // Non-static, specific to the instance
     static Sensor *currentSensor; // To store the current sensor instance for interrupt
+    // FreeRTOS task handle
+    static TaskHandle_t monitoringTaskHandle;
+
+    // Task function to monitor the pin state
+    static void monitoringTask(void *pvParameters);
 };
 
 #endif // SENSOR_H

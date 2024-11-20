@@ -12,11 +12,11 @@
 // Initialize A4988 motor drivers for the disc and case motors with their respective pins
 A4988Manager discMotor(STEP_PIN_DISC, DIR_PIN_DISC, ENABLE_PIN_DISC, 
                        MS01_PIN_DISC, MS02_PIN_DISC, MS03_PIN_DISC,
-                       SLP_PIN_DISC, RESET_PIN_DISC); // Timer number 1 for disc motor
+                       SLP_PIN_DISC, RESET_PIN_DISC,true); // true motor type 2 stepping inked to sensor
 
 A4988Manager caseMotor(STEP_PIN_CASE, DIR_PIN_CASE, ENABLE_PIN_CASE, 
                        MS01_PIN_CASE, MS02_PIN_CASE, MS03_PIN_CASE,
-                       SLP_PIN_CASE, RESET_PIN_CASE); // Timer number 2 for case motor
+                       SLP_PIN_CASE, RESET_PIN_CASE,false); // false motor type 1 stepping inked to sensor
 
 // ==================================================
 // Object Pointers
@@ -49,9 +49,9 @@ void setup() {
     // Sensor and Command Receiver Initialization
     // ==================================================
     sensor = new Sensor(SENSOR_PIN, discMotor); // Create sensor instance with pin and motor reference
-    commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver instance with sensor and motor references
-    
-   // sensor->begin(); // Initialize sensor
+    sensor->begin(); // Initialize sensor
+    sensor->startMonitoringTask();// Start monitoring class
+    commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver instance with sensor and motor references  
     commandReceiver->begin(); // Initialize command receiver
 }
 
@@ -60,6 +60,5 @@ void loop() {
     // Main Loop: Check for Commands and Update Sensor
     // ==================================================
     commandReceiver->checkCommand(); // Check for and process received commands
-    //sensor->update(); // Update sensor and motor state based on sensor input
-    delay(2); // Small delay to avoid overwhelming the loop
+    delay(1); // Small delay to avoid overwhelming the loop
 }

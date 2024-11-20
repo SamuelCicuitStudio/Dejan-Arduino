@@ -2,15 +2,8 @@
 #include "Config.h"
 
 // Initialize static members
-int Sensor::stepsToTake = 10;           ///< Number of steps the sensor will take
-unsigned long Sensor::interruptStartTime = 0; ///< Time when the interrupt starts
-bool Sensor::interruptActive = false;    ///< Flag indicating if the interrupt is active
-int Sensor::currentStep = 0;             ///< Current step count during sensor operation
-int Sensor::delayBetweenSteps = 2;       ///< Delay between each step (in milliseconds)
-unsigned long Sensor::lastStepTime = 0;  ///< Last time a step was performed
-int Sensor::originalSpeed = 0;           ///< Original speed of the motor before interruption
 Sensor* Sensor::currentSensor = nullptr; ///< Pointer to the current instance of the sensor
-
+TaskHandle_t Sensor::monitoringTaskHandle = nullptr;
 /**
  * @brief Constructor to initialize the sensor.
  * 
@@ -22,92 +15,84 @@ Sensor::Sensor(int pin, A4988Manager& motor)
     currentSensor = this; // Set current instance of the sensor
 }
 
-/**
- * @brief Sets the stop time for the sensor's operation.
- * 
- * @param value The stop time in milliseconds.
- */
-void Sensor::SetStopTime(int value) {
-    StopTime = value; // Assign the stop time
-}
-
-/**
- * @brief Sets the number of steps the sensor should take.
- * 
- * @param value The number of steps to take.
- */
-void Sensor::SetStepsToTake(int value) {
-    stepsToTake = value; // Assign the number of steps
-}
 
 /**
  * @brief Initializes the sensor and sets up the interrupt.
  * Configures the pin mode and attaches the interrupt to the specified pin.
  */
 void Sensor::begin() {
-    pinMode(_pin, INPUT_PULLUP); // Configure the sensor pin as input with pull-up resistor
-    attachInterrupt(digitalPinToInterrupt(_pin), handleInterrupt, FALLING); // Attach interrupt to pin
-    SetStopTime(STOP_TIME);  // Set default stop time
-    SetStepsToTake(STEPS_TO_TAKE);  // Set default steps to take
+    pinMode(_pin, INPUT); // Configure the sensor pin as input 
 }
 
+
+
+
 /**
- * @brief Interrupt handler to pause the motor and start stepping.
- * This function is called when the sensor's interrupt is triggered.
+ * @brief Starts the FreeRTOS task for monitoring the sensor pin.
+ *
+ * This function checks if the monitoring task (`monitoringTask`) is already running.
+ * If the task has not been created yet, it creates the task and assigns it to a core using 
+ * `xTaskCreatePinnedToCore`. The task is given a stack size of 2048 bytes and a priority of 1. 
+ * The current instance of the `Sensor` object is passed to the task as a parameter, allowing 
+ * the task to access the sensor and motor instance for pin monitoring and motor control.
+ * 
+ * The task is pinned to the core specified by `STEP_CORE`, which should be defined elsewhere 
+ * in the code.
+ *
+ * @note This function should be called to initiate the monitoring of the sensor pin for rising edges.
+ * 
+ * @see Sensor::monitoringTask For the task that performs the actual monitoring.
  */
-void Sensor::handleInterrupt() {
-    if (currentSensor && !interruptActive) {
-        // Ensure there's a valid sensor instance and the interrupt isn't active
-        originalSpeed = currentSensor->_motor->getSpeed(); // Save the motor's current speed
-        currentSensor->_motor->setFrequency(0.0); // Stop the motor
-
-        // Reset the step counter and timing variables
-        currentSensor->currentStep = 0;
-        currentSensor->lastStepTime = millis();
-
-        // Start the non-blocking stop timer
-        interruptStartTime = millis(); // Record the start time of the interrupt
-        interruptActive = true; // Mark the interrupt as active
+void Sensor::startMonitoringTask() {
+    if (monitoringTaskHandle == nullptr) {
+        xTaskCreatePinnedToCore(
+            monitoringTask,      // Task function
+            "PinMonitorTask",    // Name of the task
+            2048,                // Stack size (in bytes)
+            this,                // Parameter to pass (current instance)
+            0,                   // Task priority
+            &monitoringTaskHandle, // Task handle
+            STEP_CORE
+        );
     }
 }
 
+
 /**
- * @brief Updates the sensor's state by stepping the motor at defined intervals.
- * It checks if the stop time has elapsed and restores the motor's speed.
+ * @brief FreeRTOS task that continuously monitors a sensor pin for a rising edge (LOW to HIGH transition).
+ *
+ * This task runs in an infinite loop, constantly checking the state of the sensor pin.
+ * When a rising edge is detected (transition from LOW to HIGH), it prints a message
+ * to the serial monitor and triggers a flag in the motor controller by calling the 
+ * `SetStopFlag()` function on the associated motor. The task then updates the previous 
+ * state of the pin and waits for a specified period before polling the pin state again.
+ *
+ * The task runs on FreeRTOS and uses `vTaskDelay` to prevent excessive polling of the sensor.
+ * The delay between polling is adjustable (currently set to 30 milliseconds).
+ *
+ * @param pvParameters Pointer to the sensor object instance which holds the pin information
+ *                     and references to the motor object.
+ * 
+ * @note This task should be started using `startMonitoringTask()` to initiate pin monitoring.
+ *       The sensor pin should be configured as an input with a pull-up resistor.
  */
-void Sensor::update() {
-    if (interruptActive) {
-        unsigned long currentMillis = millis(); // Get the current time
+void Sensor::monitoringTask(void *pvParameters) {
+    Sensor *sensor = static_cast<Sensor*>(pvParameters); // Get the instance
+    bool previousState = digitalRead(sensor->_pin);      // Initial pin state
 
-        // Perform stepping at the defined intervals
-        if (currentStep < stepsToTake && currentMillis - lastStepTime >= delayBetweenSteps) {
-            _motor->step(); // Call the step function to take a step
-            lastStepTime = currentMillis; // Update the last step time
-            currentStep++; // Increment the step count
+    while (true) {
+        bool currentState = digitalRead(sensor->_pin);
+
+        // Detect rising edge (LOW -> HIGH)
+        if (previousState == LOW && currentState == HIGH) {
+            //Serial.println("Rising edge detected!");
+            sensor->_motor->SetStopFlag(); // Call SetStopFlag() on the motor;
         }
 
-        // Check if the StopTime has elapsed
-        if (millis() - interruptStartTime >= StopTime) {
-            _motor->setFrequency(originalSpeed); // Restore the motor's original speed
-            interruptActive = false; // Mark the interrupt as inactive
-        }
+        // Update previous state
+        previousState = currentState;
+
+        // Delay to prevent rapid polling (adjust as needed)
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-}
-
-/**
- * @brief Gets the current stop time of the sensor.
- * 
- * @return The current stop time in milliseconds.
- */
-uint32_t Sensor::GetStopTime() {
-    return StopTime; // Return the stop time
-}
-
-/**
- * @brief Gets the current number of steps to be taken by the sensor.
- * 
- * @return The number of steps to take.
- */
-uint32_t Sensor::GetStepsToTake() {
-    return stepsToTake; // Return the number of steps
 }

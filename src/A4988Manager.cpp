@@ -18,10 +18,10 @@
  */
 A4988Manager::A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                            uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                           uint8_t slpPin, uint8_t resetPin)
+                           uint8_t slpPin, uint8_t resetPin,bool _Number)
     : _stepPin(stepPin), _dirPin(dirPin), _enablePin(enablePin),
       _ms1Pin(ms1Pin), _ms2Pin(ms2Pin), _ms3Pin(ms3Pin),
-      _slpPin(slpPin), _resetPin(resetPin),
+      _slpPin(slpPin), _resetPin(resetPin),_Number(_Number),
       _stepping(false), _frequency(0), _interval(0), _lastStepTime(0),
       _microSteps(1), _stepTaskHandle(nullptr) {}
 
@@ -44,6 +44,9 @@ void A4988Manager::begin() {
     Stop(); // Disable the driver
     digitalWrite(_slpPin, HIGH); // Wake up the driver
     Reset(); // Reset the driver
+    ResetStopFlag(); // Reset the stop flag to resume normal stepping
+    stepsToTake = DEFAULT_STEPS_TO_TAKE;
+    StopTime = DEFAULT_STOP_TIME;
 }
 
 /**
@@ -201,25 +204,126 @@ void A4988Manager::stopMotorTask() {
 /**
  * @brief FreeRTOS task function for motor stepping.
  * 
- * This function controls the stepping of the motor in a loop, creating the step signal
- * with the specified interval.
+ * This function controls the stepping of the motor in a loop. It generates step signals 
+ * with a specified interval for the motor's stepping operation. The stepping behavior depends 
+ * on the state of the motor's stop flag:
+ * - If the stop flag is not set, the motor will step continuously with the specified interval.
+ * - If the stop flag is set, the motor will step for a specified number of pulses (`stepsToTake`), 
+ *   then wait for a predefined stop time (`StopTime`) before resuming normal stepping.
  * 
- * @param pvParameters Pointer to the instance of A4988Manager.
+ * The task runs indefinitely and is responsible for controlling the motor's stepping behavior 
+ * based on the current motor state.
+ * 
+ * @param pvParameters Pointer to the instance of `A4988Manager`, representing the motor being controlled.
+ * 
+ * @note The task uses the `motor->_interval` for controlling the delay between each step. The task 
+ *       checks the motor's `StopFlag` to determine whether to continue normal stepping or step 
+ *       a set number of pulses before waiting for the stop time.
+ * 
+ * @see A4988Manager::SetStopFlag For setting the stop flag and controlling the stepping behavior.
  */
 void A4988Manager::motorStepTask(void *pvParameters) {
     A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
 
-    // Task loop for stepping motor
+    // Task loop for motor stepping
     while (true) {
-        digitalWrite(motor->_stepPin, LOW); // Step signal LOW
-        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-        digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
-        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+        if(!motor->_Number){
+            digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+            vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+            digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+            vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+
+        } else if(motor->_Number){
+            // If stop flag is not set, keep stepping continuously
+            if (!motor->_StopFlag) {
+                digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+            }
+            // If stop flag is set, step for the specified number of pulses
+            else {
+                int pulseCount = 0;
+                while (pulseCount < motor->stepsToTake) {
+                    digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                    pulseCount++; // Increment pulse count
+                }
+
+                // Wait for the stop time before resuming normal stepping
+                vTaskDelay(motor->StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
+
+                motor->ResetStopFlag(); // Reset the stop flag to resume normal stepping
+            }
+        }
     }
 }
 
+
+/**
+ * @brief Generates a single step pulse for the A4988 stepper driver.
+ * 
+ * Sets the step pin HIGH for a short duration and then LOW to register a step.
+ * The delay between the HIGH and LOW states ensures the pulse is properly recognized by the driver.
+ */
 void A4988Manager::step() {
     digitalWrite(_stepPin, HIGH); // Set the step pin HIGH
     delayMicroseconds(10);        // Short delay to ensure the pulse is registered
     digitalWrite(_stepPin, LOW);  // Set the step pin LOW
+}
+
+/**
+ * @brief Sets the stop flag to indicate the motor should stop.
+ * 
+ * This function updates the `_StopFlag` variable to `true`, signaling that the motor should stop operating.
+ */
+void A4988Manager::SetStopFlag() {
+    _StopFlag = true;
+}
+
+/**
+ * @brief Resets the stop flag to allow motor operation.
+ * 
+ * This function updates the `_StopFlag` variable to `false`, signaling that the motor can resume operation.
+ */
+void A4988Manager::ResetStopFlag() {
+    _StopFlag = false;
+}
+
+/**
+ * @brief Gets the current stop time of the sensor.
+ * 
+ * @return The current stop time in milliseconds.
+ */
+uint32_t A4988Manager::GetStopTime() {
+    return StopTime; // Return the stop time
+}
+
+/**
+ * @brief Gets the current number of steps to be taken by the sensor.
+ * 
+ * @return The number of steps to take.
+ */
+uint32_t A4988Manager::GetStepsToTake() {
+    return stepsToTake; // Return the number of steps
+}
+
+/**
+ * @brief Sets the stop time for the sensor's operation.
+ * 
+ * @param value The stop time in milliseconds.
+ */
+void A4988Manager::SetStopTime(int value) {
+    StopTime = value; // Assign the stop time
+}
+
+/**
+ * @brief Sets the number of steps the sensor should take.
+ * 
+ * @param value The number of steps to take.
+ */
+void A4988Manager::SetStepsToTake(int value) {
+    stepsToTake = value; // Assign the number of steps
 }

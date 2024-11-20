@@ -131,8 +131,8 @@ void CommandReceiver::setMotorParameters(int motor, float speed, int microsteps,
 
 // Set sensor parameters based on received commands
 void CommandReceiver::setSensorParameters(int stopTime, int stepsToTake) {
-    sensor->SetStopTime(stopTime);
-    sensor->SetStepsToTake(stepsToTake); // Ensure the method name matches the one in your Sensor class
+    _motor2.SetStopTime(stopTime);
+    _motor2.SetStepsToTake(stepsToTake); // Ensure the method name matches the one in your Sensor class
 }
 
 // Send the current status of the system
@@ -157,8 +157,8 @@ void CommandReceiver::sendSystemStatus() {
 
     // Sensor parameters
     JsonObject Sensor = doc["sensor"].to<JsonObject>();
-    Sensor["stop"] = sensor->GetStopTime(); // Assuming GetStopTime is a method in Sensor class
-    Sensor["stepsToTake"] = sensor->GetStepsToTake(); // Assuming GetStepsToTake is a method in Sensor class
+    Sensor["stop"] = _motor2.GetStopTime(); // Assuming GetStopTime is a method in Sensor class
+    Sensor["stepsToTake"] = _motor2.GetStepsToTake(); // Assuming GetStepsToTake is a method in Sensor class
 
     // System status
     JsonObject system = doc["system"].to<JsonObject>();
