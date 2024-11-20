@@ -43,8 +43,8 @@ private:
     unsigned long _interval;
     bool _StopFlag;
     unsigned long _lastStepTime;
-    unsigned long stepsToTake;
-    unsigned long StopTime; // Non-static, specific to the instance
+    unsigned long _stepsToTake;
+    unsigned long _StopTime; // Non-static, specific to the instance
 
     uint8_t _microSteps;
     TaskHandle_t _stepTaskHandle;

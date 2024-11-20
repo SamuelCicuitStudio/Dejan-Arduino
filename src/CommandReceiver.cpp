@@ -93,7 +93,7 @@ void CommandReceiver::receiveCommand(const String& command) {
             int stepsToTake = doc["stepstotake"];
 
             // Set sensor parameters
-            setSensorParameters(stopTime, stepsToTake);
+            setSensorParameters(2,stopTime, stepsToTake);
             commandRecognized = true;
             Serial.println("Command received: SENSOR");
         } else {
@@ -130,9 +130,11 @@ void CommandReceiver::setMotorParameters(int motor, float speed, int microsteps,
 }
 
 // Set sensor parameters based on received commands
-void CommandReceiver::setSensorParameters(int stopTime, int stepsToTake) {
-    _motor2.SetStopTime(stopTime);
-    _motor2.SetStepsToTake(stepsToTake); // Ensure the method name matches the one in your Sensor class
+void CommandReceiver::setSensorParameters(int motor,int stopTime, int stepsToTake) {
+    A4988Manager& selectedMotor = (motor == 1) ? _motor1 : _motor2;
+    selectedMotor.SetStopTime(stopTime);
+    selectedMotor.SetStepsToTake(stepsToTake); // Ensure the method name matches the one in your Sensor class
+
 }
 
 // Send the current status of the system

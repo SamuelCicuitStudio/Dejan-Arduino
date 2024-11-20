@@ -48,8 +48,8 @@ void A4988Manager::begin() {
     digitalWrite(_slpPin, HIGH); // Wake up the driver
     Reset(); // Reset the driver
     ResetStopFlag(); // Reset the stop flag to resume normal stepping
-    stepsToTake = DEFAULT_STEPS_TO_TAKE;
-    StopTime = DEFAULT_STOP_TIME;
+    _stepsToTake = DEFAULT_STEPS_TO_TAKE;
+    _StopTime = DEFAULT_STOP_TIME;
 }
 
 /**
@@ -225,7 +225,7 @@ void A4988Manager::stopMotorTask() {
 void A4988Manager::motorStepTask(void *pvParameters) {
     A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
     bool previousState = digitalRead(SENSOR_PIN);  // Initial pin state
-
+    Serial.println("Motor Step Task Started");
     // Task loop for motor stepping
     while (true) {
 
@@ -242,6 +242,7 @@ void A4988Manager::motorStepTask(void *pvParameters) {
                 if(currentState  == HIGH && previousState == LOW){
                     previousState = currentState;
                     risingEdgeDetected = true;
+                    Serial.println("Rising Edge Detected");
                 };
                 digitalWrite(motor->_stepPin, LOW);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
@@ -251,14 +252,16 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             };
             // Detect rising edge (LOW -> HIGH)
             if (risingEdgeDetected ) {
+                Serial.println("Performing Steps After Rising Edge");
                 // Confirm we are out of the switching zone by making a few steps
-                for (int i = 0; i < motor->stepsToTake; i++) {
+                for (int i = 0; i < motor->_stepsToTake; i++) {
                     digitalWrite(motor->_stepPin, LOW);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
                     digitalWrite(motor->_stepPin, HIGH);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
                 };
-                vTaskDelay(motor->StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
+                vTaskDelay(motor->_StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
+                Serial.println("Completed Steps After Rising Edge");
 
             };
             while(true){
@@ -266,6 +269,7 @@ void A4988Manager::motorStepTask(void *pvParameters) {
                 if(currentState == LOW && previousState == HIGH){
                     previousState = currentState;
                     risingEdgeDetected = false;
+                    Serial.println("Falling Edge Detected");
                 };
                 digitalWrite(motor->_stepPin, LOW);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
@@ -316,7 +320,7 @@ void A4988Manager::ResetStopFlag() {
  * @return The current stop time in milliseconds.
  */
 uint32_t A4988Manager::GetStopTime() {
-    return StopTime; // Return the stop time
+    return _StopTime; // Return the stop time
 }
 
 /**
@@ -325,7 +329,7 @@ uint32_t A4988Manager::GetStopTime() {
  * @return The number of steps to take.
  */
 uint32_t A4988Manager::GetStepsToTake() {
-    return stepsToTake; // Return the number of steps
+    return _stepsToTake; // Return the number of steps
 }
 
 /**
@@ -334,7 +338,7 @@ uint32_t A4988Manager::GetStepsToTake() {
  * @param value The stop time in milliseconds.
  */
 void A4988Manager::SetStopTime(int value) {
-    StopTime = value; // Assign the stop time
+    _StopTime = value; // Assign the stop time
 }
 
 /**
@@ -343,5 +347,5 @@ void A4988Manager::SetStopTime(int value) {
  * @param value The number of steps to take.
  */
 void A4988Manager::SetStepsToTake(int value) {
-    stepsToTake = value; // Assign the number of steps
+    _stepsToTake = value; // Assign the number of steps
 }
