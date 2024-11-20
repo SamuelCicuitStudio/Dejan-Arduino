@@ -138,11 +138,11 @@ void A4988Manager::Reset() {
  */
 void A4988Manager::setFrequency(float frequency) {
     _frequency = frequency;
-    if (_frequency == 0.0f) {
+    if (_frequency == 0.0) {
         stopMotorTask(); // Stop motor task if frequency is zero
     } else {
         // Calculate step interval based on frequency and microsteps
-        _interval = 1000.0f / (_frequency * _microSteps); // Interval in milliseconds
+        _interval = 1000.0 / (_frequency); // Interval in milliseconds
         Start();// enable the driver
         startMotorTask(); // Start motor task if frequency is non-zero
     }

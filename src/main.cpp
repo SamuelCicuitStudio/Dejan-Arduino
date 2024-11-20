@@ -51,7 +51,7 @@ void setup() {
     sensor = new Sensor(SENSOR_PIN, discMotor); // Create sensor instance with pin and motor reference
     commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver instance with sensor and motor references
     
-    sensor->begin(); // Initialize sensor
+   // sensor->begin(); // Initialize sensor
     commandReceiver->begin(); // Initialize command receiver
 }
 
@@ -60,6 +60,6 @@ void loop() {
     // Main Loop: Check for Commands and Update Sensor
     // ==================================================
     commandReceiver->checkCommand(); // Check for and process received commands
-    sensor->update(); // Update sensor and motor state based on sensor input
+    //sensor->update(); // Update sensor and motor state based on sensor input
     delay(2); // Small delay to avoid overwhelming the loop
 }

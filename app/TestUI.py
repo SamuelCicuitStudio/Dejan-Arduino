@@ -48,7 +48,7 @@ def request_current_state():
 
     try:
         # Send command to request current state as JSON
-        ser.write(b'{"command": "getState"}')
+        ser.write(b'{"command": "GETSTATUS"}')
         ser.flush()
 
         # Wait for the response (ensure the response is complete)
