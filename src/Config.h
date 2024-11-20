@@ -41,12 +41,13 @@
 // =========================================================================
 #define SLP_PIN_DISC        9      // Sleep Pin for Stepper Motor (Disc)
 #define RESET_PIN_DISC      47     // Reset Pin for Stepper Motor (Disc)
-
+#define DEFAULT_FREQ  50
 // =========================================================================
 // Sensor and Communication Pin Definitions
 // =========================================================================
 #define SENSOR_PIN          18     // Sensor Pin
-
+#define  STEPS_TO_TAKE  100   // Number of steps to take when the sensor is triggered
+#define  STOP_TIME  5000      // Time to stop in milliseconds
 // =========================================================================
 // Display Communication Pins
 // =========================================================================

@@ -2,6 +2,7 @@
 #define SENSOR_H
 
 #include "A4988Manager.h"
+#include "Config.h"
 
 class Sensor {
 public:
@@ -12,6 +13,8 @@ public:
     void update();
     void SetStopTime(int value);
     void SetStepsToTake(int value);
+    uint32_t GetStopTime();
+    uint32_t GetStepsToTake();
 
     
     static void handleInterrupt(); // Interrupt handler should be static
@@ -19,7 +22,7 @@ public:
 private:
     int _pin;
     A4988Manager *_motor; // Non-static pointer to the motor instance
-    static int stepsToTake;
+    static int stepsToTake ;
     static unsigned long interruptStartTime;
     static bool interruptActive;
     static int currentStep;

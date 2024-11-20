@@ -5,12 +5,6 @@
 #include "config.h"
 #include "SDCardManager.h"
 
-// ==================================================
-// Motor Settings
-// ==================================================
-// Define constants for motor behavior
-constexpr int STEPS_TO_TAKE = 100;   // Number of steps to take when the sensor is triggered
-constexpr int STOP_TIME = 5000;      // Time to stop in milliseconds
 
 // ==================================================
 // Motor Instances
@@ -18,11 +12,11 @@ constexpr int STOP_TIME = 5000;      // Time to stop in milliseconds
 // Initialize A4988 motor drivers for the disc and case motors with their respective pins
 A4988Manager discMotor(STEP_PIN_DISC, DIR_PIN_DISC, ENABLE_PIN_DISC, 
                        MS01_PIN_DISC, MS02_PIN_DISC, MS03_PIN_DISC,
-                       SLP_PIN_DISC, RESET_PIN_DISC, 1); // Timer number 1 for disc motor
+                       SLP_PIN_DISC, RESET_PIN_DISC); // Timer number 1 for disc motor
 
 A4988Manager caseMotor(STEP_PIN_CASE, DIR_PIN_CASE, ENABLE_PIN_CASE, 
                        MS01_PIN_CASE, MS02_PIN_CASE, MS03_PIN_CASE,
-                       SLP_PIN_CASE, RESET_PIN_CASE, 2); // Timer number 2 for case motor
+                       SLP_PIN_CASE, RESET_PIN_CASE); // Timer number 2 for case motor
 
 // ==================================================
 // Object Pointers

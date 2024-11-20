@@ -1,0 +1,147 @@
+#include <Arduino.h>
+
+// Define LED pins (Updated to 8 and 18)
+#define LED1 8   // LED1 connected to GPIO 8
+#define LED2 18  // LED2 connected to GPIO 18
+
+// Initial frequency for both LEDs in Hz
+float frequency1 = 1.0;  // Frequency for LED1 in Hz
+float frequency2 = 1.0;  // Frequency for LED2 in Hz
+
+// Interval calculations for both LEDs (in milliseconds)
+unsigned long interval1 = 1000 / frequency1; // Interval for LED1 in milliseconds
+unsigned long interval2 = 1000 / frequency2; // Interval for LED2 in milliseconds
+
+unsigned long lastUpdateTime = 0;  // Last time the speed was updated
+unsigned long sweepInterval = 1000; // Time interval for updating speed (1 second)
+float speedStep = 1.0; // Speed change step for frequency sweep
+float speedMin = 1.0;  // Minimum frequency (1 Hz)
+float speedMax = 50.0; // Maximum frequency (50 Hz)
+
+// Task handle for LED tasks
+TaskHandle_t led1TaskHandle = NULL;
+TaskHandle_t led2TaskHandle = NULL;
+
+// Function to handle LED1 blinking task
+void led1BlinkTask(void *pvParameters) {
+  while (true) {
+    digitalWrite(LED1, LOW);   // Turn on LED1 (set to LOW)
+    vTaskDelay(interval1 / portTICK_PERIOD_MS);  // Delay for LED1 interval
+    digitalWrite(LED1, HIGH);    // Turn off LED1 (set to HIGH)
+    vTaskDelay(interval1 / portTICK_PERIOD_MS);  // Delay for LED1 interval
+  }
+}
+
+// Function to handle LED2 blinking task
+void led2BlinkTask(void *pvParameters) {
+  while (true) {
+    digitalWrite(LED2, LOW);   // Turn on LED2 (set to LOW)
+    vTaskDelay(interval2 / portTICK_PERIOD_MS);  // Delay for LED2 interval
+    digitalWrite(LED2, HIGH);    // Turn off LED2 (set to HIGH)
+    vTaskDelay(interval2 / portTICK_PERIOD_MS);  // Delay for LED2 interval
+  }
+}
+
+// Function to configure and start LED1 blinking task
+void startLed1Task() {
+  if (led1TaskHandle == NULL) {
+    xTaskCreatePinnedToCore(led1BlinkTask, "LED1 Blink", 1024, NULL, 1, &led1TaskHandle, 0); // Task on core 0
+  }
+}
+
+// Function to configure and start LED2 blinking task
+void startLed2Task() {
+  if (led2TaskHandle == NULL) {
+    xTaskCreatePinnedToCore(led2BlinkTask, "LED2 Blink", 1024, NULL, 1, &led2TaskHandle, 1); // Task on core 1
+  }
+}
+
+// Function to stop LED1 blinking task
+void stopLed1Task() {
+  if (led1TaskHandle != NULL) {
+    vTaskDelete(led1TaskHandle);  // Delete the LED1 task
+    led1TaskHandle = NULL;
+    digitalWrite(LED1, HIGH);  // Turn off LED1 (set to HIGH)
+  }
+}
+
+// Function to stop LED2 blinking task
+void stopLed2Task() {
+  if (led2TaskHandle != NULL) {
+    vTaskDelete(led2TaskHandle);  // Delete the LED2 task
+    led2TaskHandle = NULL;
+    digitalWrite(LED2, HIGH);  // Turn off LED2 (set to HIGH)
+  }
+}
+
+// Function to handle serial input for frequency change
+void handleSerialInput() {
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');  // Read the input string until newline
+    input.trim();  // Trim any extra whitespace
+
+    if (input.startsWith("LED1")) {
+      int startPos = input.indexOf('(');
+      int endPos = input.indexOf(')');
+      if (startPos != -1 && endPos != -1) {
+        String frequencyStr = input.substring(startPos + 1, endPos);
+        float newFrequency = frequencyStr.toFloat();
+        if (newFrequency == 0.0) {
+          // Stop LED1 and delete the task
+          stopLed1Task();
+        } else if (newFrequency >= speedMin && newFrequency <= speedMax) {
+          frequency1 = newFrequency;
+          interval1 = 1000 / frequency1; // Update interval for LED1
+          startLed1Task();  // Recreate the LED1 task if it's not already running
+          Serial.print("LED1 frequency set to: ");
+          Serial.print(frequency1);
+          Serial.println(" Hz");
+        } else {
+          Serial.println("Invalid frequency. Please enter a value between 1 Hz and 50 Hz.");
+        }
+      }
+    } 
+    else if (input.startsWith("LED2")) {
+      int startPos = input.indexOf('(');
+      int endPos = input.indexOf(')');
+      if (startPos != -1 && endPos != -1) {
+        String frequencyStr = input.substring(startPos + 1, endPos);
+        float newFrequency = frequencyStr.toFloat();
+        if (newFrequency == 0.0) {
+          // Stop LED2 and delete the task
+          stopLed2Task();
+        } else if (newFrequency >= speedMin && newFrequency <= speedMax) {
+          frequency2 = newFrequency;
+          interval2 = 1000 / frequency2; // Update interval for LED2
+          startLed2Task();  // Recreate the LED2 task if it's not already running
+          Serial.print("LED2 frequency set to: ");
+          Serial.print(frequency2);
+          Serial.println(" Hz");
+        } else {
+          Serial.println("Invalid frequency. Please enter a value between 1 Hz and 50 Hz.");
+        }
+      }
+    }
+  }
+}
+
+void setup() {
+  // Start serial communication for debugging
+  Serial.begin(115200);
+
+  // Initialize LED pins
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  digitalWrite(LED1, HIGH);  // Turn off LED1 initially (set to HIGH)
+  digitalWrite(LED2, HIGH);  // Turn off LED2 initially (set to HIGH)
+
+  // Create tasks to handle LED blinking independently on each core
+  startLed1Task();
+  startLed2Task();
+}
+
+void loop() {
+  // Handle manual frequency input from serial
+  handleSerialInput();
+  // Nothing else to do in the loop, as the blinking is handled by the tasks
+}

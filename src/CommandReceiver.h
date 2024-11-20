@@ -31,6 +31,7 @@ private:
     // Set motor parameters based on received commands
     void setMotorParameters(int motor, float speed, int microsteps, int direction );
     void setSensorParameters(int stopTime, int stepsToTake);
+    void sendSystemStatus();
 };
 
 #endif // COMMAND_RECEIVER_H

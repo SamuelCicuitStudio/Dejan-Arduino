@@ -1,34 +1,35 @@
 #include "A4988Manager.h"
-
-// Initialize static instance pointers for two motors
-volatile A4988Manager* A4988Manager::instance1 = nullptr;
-volatile A4988Manager* A4988Manager::instance2 = nullptr;
+#include <Arduino.h>
 
 /**
- * @brief Constructor for A4988Manager.
+ * @brief Constructor for the A4988Manager class
  * 
- * Initializes pin configuration and sets initial state for stepping.
+ * Initializes the motor driver with the provided pins for step, direction, enable,
+ * microstepping pins, sleep, and reset pins.
  * 
- * @param stepPin Pin number connected to STEP input.
- * @param dirPin Pin number connected to DIR input.
- * @param enablePin Pin number connected to ENABLE input.
- * @param ms1Pin Pin number connected to MS1 for microstepping.
- * @param ms2Pin Pin number connected to MS2 for microstepping.
- * @param ms3Pin Pin number connected to MS3 for microstepping.
- * @param slpPin Pin number connected to SLEEP input.
- * @param resetPin Pin number connected to RESET input.
- * @param timerNumber The timer number to be used for stepping interrupts.
+ * @param stepPin Pin for the step signal.
+ * @param dirPin Pin for the direction signal.
+ * @param enablePin Pin to enable/disable the driver.
+ * @param ms1Pin Microstepping mode pin 1.
+ * @param ms2Pin Microstepping mode pin 2.
+ * @param ms3Pin Microstepping mode pin 3.
+ * @param slpPin Sleep pin to wake the driver.
+ * @param resetPin Reset pin to reset the driver.
  */
 A4988Manager::A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                            uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                           uint8_t slpPin, uint8_t resetPin, int timerNumber)
+                           uint8_t slpPin, uint8_t resetPin)
     : _stepPin(stepPin), _dirPin(dirPin), _enablePin(enablePin),
       _ms1Pin(ms1Pin), _ms2Pin(ms2Pin), _ms3Pin(ms3Pin),
       _slpPin(slpPin), _resetPin(resetPin),
-      _stepping(false), _frequency(0), _interval(0), _timerNumber(timerNumber) {}
+      _stepping(false), _frequency(0), _interval(0), _lastStepTime(0),
+      _microSteps(1), _stepTaskHandle(nullptr) {}
 
 /**
- * @brief Initializes the A4988 motor driver by configuring pins and setting the motor state.
+ * @brief Initializes the motor driver and sets pin modes.
+ * 
+ * This function sets all relevant pins to OUTPUT mode, disables the driver,
+ * wakes up the driver, and resets it.
  */
 void A4988Manager::begin() {
     pinMode(_stepPin, OUTPUT);
@@ -41,33 +42,16 @@ void A4988Manager::begin() {
     pinMode(_resetPin, OUTPUT);
 
     Stop(); // Disable the driver
-    digitalWrite(_slpPin, HIGH);    // Wake up the driver
-    Reset();   // Reset the driver
-    configureTimer(); // Configure the timer for stepping
+    digitalWrite(_slpPin, HIGH); // Wake up the driver
+    Reset(); // Reset the driver
 }
 
 /**
- * @brief Timer interrupt service routine (ISR) callback.
+ * @brief Sets the microstepping mode using the MS1, MS2, and MS3 pins.
  * 
- * This ISR is called when the timer triggers. It invokes the step method of the A4988Manager instance.
- * 
- * @param arg The pointer to the A4988Manager instance.
- */
-void A4988Manager::timerISR(void* arg) {
-    A4988Manager* instance = (A4988Manager*)arg;
-    if (instance) {
-        instance->step();
-    }
-}
-
-/**
- * @brief Set the microstepping mode of the A4988 driver.
- * 
- * Configures the microstepping pins (MS1, MS2, MS3) to the specified values.
- * 
- * @param ms1 Microstepping mode MS1 pin value.
- * @param ms2 Microstepping mode MS2 pin value.
- * @param ms3 Microstepping mode MS3 pin value.
+ * @param ms1 State of the MS1 pin (HIGH/LOW).
+ * @param ms2 State of the MS2 pin (HIGH/LOW).
+ * @param ms3 State of the MS3 pin (HIGH/LOW).
  */
 void A4988Manager::setMicrostepping(int ms1, int ms2, int ms3) {
     digitalWrite(_ms1Pin, ms1);
@@ -76,28 +60,31 @@ void A4988Manager::setMicrostepping(int ms1, int ms2, int ms3) {
 }
 
 /**
- * @brief Set the step resolution for the motor.
+ * @brief Sets the step resolution for the motor driver.
  * 
- * Configures the microstepping mode based on the desired resolution.
- * 
- * @param resolution The step resolution (1, 2, 4, 8, 16).
+ * @param resolution Step resolution (1 = full step, 2 = half step, 4 = quarter step, etc.).
  */
 void A4988Manager::setStepResolution(int resolution) {
     switch (resolution) {
         case 1:  // Full step
             setMicrostepping(LOW, LOW, LOW);
+            _microSteps = resolution;
             break;
         case 2:  // Half step
             setMicrostepping(HIGH, LOW, LOW);
+            _microSteps = resolution;
             break;
         case 4:  // Quarter step
             setMicrostepping(LOW, HIGH, LOW);
+            _microSteps = resolution;
             break;
         case 8:  // Eighth step
             setMicrostepping(HIGH, HIGH, LOW);
+            _microSteps = resolution;
             break;
         case 16: // Sixteenth step
             setMicrostepping(HIGH, HIGH, HIGH);
+            _microSteps = resolution;
             break;
         default:
             Serial.println("Invalid resolution.");
@@ -106,158 +93,133 @@ void A4988Manager::setStepResolution(int resolution) {
 }
 
 /**
- * @brief Set the speed of the motor in Hz.
+ * @brief Sets the direction of the motor (clockwise or counter-clockwise).
  * 
- * This function sets the frequency of the motor's step pulses, which determines its speed.
- * 
- * @param speed The speed in Hz.
+ * @param value Direction value (HIGH = clockwise, LOW = counter-clockwise).
  */
-void A4988Manager::setSpeed(float speed) {
-    // Store the desired frequency (in Hz)
-    _frequency = speed;
-
-    // If speed is 0 Hz, set the interval to the highest possible value (e.g., a very large number)
-    // Otherwise, calculate the interval between steps in microseconds
-    if (speed > 0) {
-        _interval = 1000000.0 / speed;  // Calculate the interval for positive speeds
-    } else {
-        _interval = UINT64_MAX;  // Set to the highest possible interval for 0 Hz (max 32-bit unsigned value)
-    }
-
-    // Reconfigure the timer alarm with the updated interval
-    if (_timerGroup != -1 && _timerIdx != -1) {
-        timer_set_alarm_value(_timerGroup, _timerIdx, _interval);  // Update the timer alarm value
-    }
-}
-
-
-
-/**
- * @brief Start the stepping process.
- * 
- * This sets the stepping flag to true, allowing the motor to step.
- */
-void A4988Manager::startStepping() {
-    _stepping = true;
+void A4988Manager::setDirPin(bool value) {
+    digitalWrite(_dirPin, value); // Set direction of the driver
 }
 
 /**
- * @brief Stop the stepping process.
+ * @brief Enables the motor driver.
  * 
- * This sets the stepping flag to false, stopping the motor from stepping.
- */
-void A4988Manager::stopStepping() {
-    _stepping = false;
-}
-
-/**
- * @brief Perform one step.
- * 
- * If the stepping flag is true, this method generates a step pulse on the STEP pin.
- */
-void A4988Manager::step() {
-    if (_stepping) {
-        digitalWrite(_stepPin, HIGH);
-        delayMicroseconds(1); // Short pulse
-        digitalWrite(_stepPin, LOW);
-    }
-}
-
-/**
- * @brief Configure the timer for interrupts.
- * 
- * This method configures the timer to trigger an interrupt at the specified interval for stepping.
- */
-void A4988Manager::configureTimer() {
-    // Set the instance pointer based on the timer number
-    if (_timerNumber == 1) {
-        instance1 = this; // Assign this instance to the first motor
-        _timerGroup = TIMER_GROUP_0;
-        _timerIdx = TIMER_0;
-    } else if (_timerNumber == 2) {
-        instance2 = this; // Assign this instance to the second motor
-        _timerGroup = TIMER_GROUP_0;
-        _timerIdx = TIMER_1;
-    } else {
-        Serial.println("Invalid timer number.");
-        return;
-    }
-
-    // Configure the timer
-    timer_config_t config;
-    config.divider = 80;  // Set prescaler to 80 (1 microsecond tick)
-    config.counter_dir = TIMER_COUNT_UP;
-    config.counter_en = TIMER_START;
-    config.alarm_en = TIMER_ALARM_EN;
-    config.auto_reload = TIMER_AUTORELOAD_EN;  // Auto-reload enabled
-    timer_init(_timerGroup, _timerIdx, &config);
-
-    // Set the timer alarm to trigger the ISR at the appropriate interval
-    timer_set_alarm_value(_timerGroup, _timerIdx, _interval);
-    timer_enable_intr(_timerGroup, _timerIdx);
-
-    // Register the callback function for the timer interrupt
-    timer_isr_register(_timerGroup, _timerIdx, timerISR, (void*)this, ESP_INTR_FLAG_IRAM, nullptr);
-}
-
-/**
- * @brief Get the current speed of the motor.
- * 
- * Returns the current speed in Hz.
- * 
- * @return The current speed in Hz.
- */
-float A4988Manager::getSpeed() {
-    return _frequency;
-}
-
-/**
- * @brief Get the direction pin.
- * 
- * Returns the direction pin number.
- * 
- * @return The direction pin number.
- */
-int A4988Manager::getDirPin() const {
-    return _dirPin;
-}
-
-/**
- * @brief Enable the motor driver.
- * 
- * This method enables the motor driver by setting the ENABLE pin low.
+ * This function sets the enable pin LOW to activate the motor driver.
  */
 void A4988Manager::Start() {
     digitalWrite(_enablePin, LOW); // Enable the driver
 }
 
 /**
- * @brief Disable the motor driver.
+ * @brief Disables the motor driver.
  * 
- * This method disables the motor driver by setting the ENABLE pin high.
+ * This function sets the enable pin HIGH to disable the motor driver.
  */
 void A4988Manager::Stop() {
     digitalWrite(_enablePin, HIGH); // Disable the driver
 }
 
 /**
- * @brief Reset the motor driver.
+ * @brief Resets the motor driver.
  * 
- * This method performs a hardware reset of the A4988 motor driver.
+ * This function sets the reset pin LOW, waits for a short duration, then sets the
+ * reset pin HIGH to re-enable the driver.
  */
 void A4988Manager::Reset() {
     digitalWrite(_resetPin, LOW); // Set reset pin low
-    delayMicroseconds(100);        // Wait for a short duration (100 microseconds)
+    delayMicroseconds(100);        // Wait for a short duration
     digitalWrite(_resetPin, HIGH); // Set reset pin high to re-enable the driver
 }
 
 /**
- * @brief Set the direction pin value.
+ * @brief Sets the frequency of the stepping signal (in Hz).
  * 
- * This method sets the direction of the motor by writing a value to the DIR pin.
- * 
- * @param value The value to set the DIR pin to (HIGH or LOW).
+ * @param frequency Frequency in Hz.
  */
-void A4988Manager::SetDirPin(bool value) {
-    digitalWrite(_dirPin, value); // Set direction of the driver
+void A4988Manager::setFrequency(float frequency) {
+    _frequency = frequency;
+    if (_frequency == 0.0f) {
+        stopMotorTask(); // Stop motor task if frequency is zero
+    } else {
+        // Calculate step interval based on frequency and microsteps
+        _interval = 1000.0f / (_frequency * _microSteps); // Interval in milliseconds
+        Start();// enable the driver
+        startMotorTask(); // Start motor task if frequency is non-zero
+    }
+}
+
+/**
+ * @brief Gets the current speed of the motor.
+ * 
+ * @return The current frequency (speed) of the motor.
+ */
+float A4988Manager::getSpeed() {
+    return _frequency;
+}
+
+/**
+ * @brief Gets the direction pin.
+ * 
+ * @return The direction pin.
+ */
+int A4988Manager::getDir() {
+    return digitalRead(_dirPin);
+}
+
+/**
+ * @brief Gets the current step resolution.
+ * 
+ * @return The current microstep resolution.
+ */
+uint8_t A4988Manager::getStepResolution() {
+    return _microSteps;
+}
+
+/**
+ * @brief Starts the motor step task using FreeRTOS.
+ * 
+ * This function creates a FreeRTOS task to step the motor.
+ */
+void A4988Manager::startMotorTask() {
+    if (_stepTaskHandle == nullptr) {
+        xTaskCreatePinnedToCore(motorStepTask, "Motor Step Task", 1024, this, 1, &_stepTaskHandle, 0);
+    }
+}
+
+/**
+ * @brief Stops the motor step task.
+ * 
+ * This function deletes the FreeRTOS task responsible for stepping the motor.
+ */
+void A4988Manager::stopMotorTask() {
+    if (_stepTaskHandle != nullptr) {
+        vTaskDelete(_stepTaskHandle);
+        _stepTaskHandle = nullptr;
+    }
+}
+
+/**
+ * @brief FreeRTOS task function for motor stepping.
+ * 
+ * This function controls the stepping of the motor in a loop, creating the step signal
+ * with the specified interval.
+ * 
+ * @param pvParameters Pointer to the instance of A4988Manager.
+ */
+void A4988Manager::motorStepTask(void *pvParameters) {
+    A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
+
+    // Task loop for stepping motor
+    while (true) {
+        digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+        digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+        vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+    }
+}
+
+void A4988Manager::step() {
+    digitalWrite(_stepPin, HIGH); // Set the step pin HIGH
+    delayMicroseconds(10);        // Short delay to ensure the pulse is registered
+    digitalWrite(_stepPin, LOW);  // Set the step pin LOW
 }

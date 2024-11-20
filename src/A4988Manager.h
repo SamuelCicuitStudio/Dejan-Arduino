@@ -1,49 +1,41 @@
-#ifndef A4988Manager_h
-#define A4988Manager_h
+#ifndef A4988Manager_H
+#define A4988Manager_H
 
 #include <Arduino.h>
-#include "driver/timer.h"
+#include <FreeRTOS.h>
 
 class A4988Manager {
 public:
+    // Constructor for the A4988Manager
     A4988Manager(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
                  uint8_t ms1Pin, uint8_t ms2Pin, uint8_t ms3Pin,
-                 uint8_t slpPin, uint8_t resetPin, int timerNumber);
+                 uint8_t slpPin, uint8_t resetPin);
 
     void begin();
-    static void timerISR(void* arg);
     void setMicrostepping(int ms1, int ms2, int ms3);
     void setStepResolution(int resolution);
-    void setSpeed(float speed);
-    void startStepping();
-    void stopStepping();
-    void step();
-    void configureTimer();
-    float getSpeed();
-    int getDirPin() const;
+    void setDirPin(bool value);
     void Start();
     void Stop();
     void Reset();
-    void SetDirPin(bool value);
+    void setFrequency(float frequency);
+    float getSpeed();
+    int getDir();
+    uint8_t getStepResolution();
+    void startMotorTask();
+    void stopMotorTask();
+    void step();
 
 private:
-    uint8_t _stepPin;
-    uint8_t _dirPin;
-    uint8_t _enablePin;
-    uint8_t _ms1Pin;
-    uint8_t _ms2Pin;
-    uint8_t _ms3Pin;
-    uint8_t _slpPin;
-    uint8_t _resetPin;
-    volatile bool _stepping;
+    uint8_t _stepPin, _dirPin, _enablePin, _ms1Pin, _ms2Pin, _ms3Pin;
+    uint8_t _slpPin, _resetPin;
+    bool _stepping;
     float _frequency;
-    uint32_t _interval;
-    int _timerNumber;
-    timer_group_t _timerGroup;
-    timer_idx_t _timerIdx;
-    
-    static volatile A4988Manager* instance1;
-    static volatile A4988Manager* instance2;
+    unsigned long _interval;
+    unsigned long _lastStepTime;
+    uint8_t _microSteps;
+    TaskHandle_t _stepTaskHandle;
+    static void motorStepTask(void *pvParameters);
 };
 
-#endif
+#endif // A4988Manager_H

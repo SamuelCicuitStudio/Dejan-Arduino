@@ -1,0 +1,22 @@
+{
+    "status": "ok",
+    "motorCase": {
+      "speed": 50,
+      "microsteps": 16,
+      "direction": 0
+    },
+    "motorDisc": {
+      "speed": 50,
+      "microsteps": 16,
+      "direction": 0
+    },
+    "sensor": {
+      "stop": 1000,
+      "stepsToTake": 200
+    },
+    "system": {
+      "status": "active",
+      "lastCommand": "STARTSYSTEM"
+    }
+  }
+  

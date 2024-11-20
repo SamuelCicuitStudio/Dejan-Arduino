@@ -32,7 +32,7 @@ void CommandReceiver::checkCommand() {
 // Function to receive and handle command
 void CommandReceiver::receiveCommand(const String& command) {
     // Allocate a JSON document
-    StaticJsonDocument<200> doc; // Adjust size as needed
+    JsonDocument doc; // Adjust size as needed
 
     // Deserialize the JSON command
     DeserializationError error = deserializeJson(doc, command);
@@ -58,16 +58,16 @@ void CommandReceiver::receiveCommand(const String& command) {
     if (strcmp(cmdType, "STOPSYSTEM") == 0) {
         _motor1.Stop();
         _motor2.Stop();
-        _motor1.stopStepping();
-        _motor2.stopStepping();
+        _motor1.setFrequency(0.0);
+        _motor2.setFrequency(0.0);
         commandRecognized = true;
         Serial.println("Command received: STOPSYSTEM");
 
     } else if (strcmp(cmdType, "STARTSYSTEM") == 0) {
         _motor1.Start();
         _motor2.Start();
-        _motor1.startStepping();
-        _motor2.startStepping();
+        _motor1.setFrequency(_motor1.getSpeed());
+        _motor2.setFrequency(_motor2.getSpeed());
         commandRecognized = true;
         Serial.println("Command received: STARTSYSTEM");
 
@@ -100,6 +100,12 @@ void CommandReceiver::receiveCommand(const String& command) {
             Serial.println("Invalid sensor command: missing parameters");
         }
 
+    } else if (strcmp(cmdType, "GETSTATUS") == 0) {
+        // Handle GETSTATUS command
+        sendSystemStatus();
+        commandRecognized = true;
+        Serial.println("Command received: GETSTATUS");
+
     } else {
         Serial.println("Unknown command received");
     }
@@ -115,18 +121,54 @@ void CommandReceiver::setMotorParameters(int motor, float speed, int microsteps,
     A4988Manager& selectedMotor = (motor == 1) ? _motor1 : _motor2;
 
     selectedMotor.Stop(); // Stop that motor
-    selectedMotor.setSpeed(speed);
     selectedMotor.setStepResolution(microsteps);
-
     // Set direction (assuming 1 for forward and 0 for backward)
-    selectedMotor.SetDirPin(direction);
+    selectedMotor.setDirPin(direction);
     selectedMotor.Reset(); // Reset the driver of that motor
     selectedMotor.Start(); // Start that motor Driver
-    selectedMotor.startStepping(); // Start stepping the motor
+    selectedMotor.setFrequency(speed);//start the stepping task
 }
 
 // Set sensor parameters based on received commands
 void CommandReceiver::setSensorParameters(int stopTime, int stepsToTake) {
     sensor->SetStopTime(stopTime);
     sensor->SetStepsToTake(stepsToTake); // Ensure the method name matches the one in your Sensor class
+}
+
+// Send the current status of the system
+void CommandReceiver::sendSystemStatus() {
+    // Create a JSON document
+    JsonDocument doc;
+
+    // Populate system status
+    doc["status"] = "ok";
+
+    // Motor case parameters
+    JsonObject motorCase = doc.createNestedObject("motorCase");
+    motorCase["speed"] = _motor1.getSpeed(); // Assuming you have a getter method in A4988Manager to get the speed
+    motorCase["microsteps"] = _motor1.getStepResolution(); // Assuming getter for microsteps
+    motorCase["direction"] = _motor1.getDir(); // Assuming getter for direction
+
+    // Motor disc parameters
+    JsonObject motorDisc = doc.createNestedObject("motorDisc");
+    motorDisc["speed"] = _motor2.getSpeed(); // Same assumptions as above
+    motorDisc["microsteps"] = _motor2.getStepResolution();
+    motorDisc["direction"] = _motor2.getDir();
+
+    // Sensor parameters
+    JsonObject Sensor = doc.createNestedObject("sensor");
+    Sensor["stop"] = sensor->GetStopTime(); // Assuming GetStopTime is a method in Sensor class
+    Sensor["stepsToTake"] = sensor->GetStepsToTake(); // Assuming GetStepsToTake is a method in Sensor class
+
+    // System status
+    JsonObject system = doc.createNestedObject("system");
+    system["status"] = "active"; // Or whatever the current system status is
+    system["lastCommand"] = "STARTSYSTEM"; // The last command that was executed, could be dynamically updated
+
+    // Serialize the JSON to a string
+    String output;
+    serializeJson(doc, output);
+
+    // Send the JSON string over Serial
+    Serial.println(output);
 }
