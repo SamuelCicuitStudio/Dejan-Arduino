@@ -48,9 +48,8 @@ void setup() {
     // ==================================================
     // Sensor and Command Receiver Initialization
     // ==================================================
-    sensor = new Sensor(SENSOR_PIN, discMotor); // Create sensor instance with pin and motor reference
+    sensor = new Sensor(SENSOR_PIN); // Create sensor instance with pin and motor reference
     sensor->begin(); // Initialize sensor
-    sensor->startMonitoringTask();// Start monitoring class
     commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver instance with sensor and motor references  
     commandReceiver->begin(); // Initialize command receiver
 }

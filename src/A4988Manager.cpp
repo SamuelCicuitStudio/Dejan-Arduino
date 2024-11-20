@@ -202,64 +202,84 @@ void A4988Manager::stopMotorTask() {
 }
 
 /**
- * @brief FreeRTOS task function for motor stepping.
- * 
- * This function controls the stepping of the motor in a loop. It generates step signals 
- * with a specified interval for the motor's stepping operation. The stepping behavior depends 
- * on the state of the motor's stop flag:
- * - If the stop flag is not set, the motor will step continuously with the specified interval.
- * - If the stop flag is set, the motor will step for a specified number of pulses (`stepsToTake`), 
- *   then wait for a predefined stop time (`StopTime`) before resuming normal stepping.
- * 
- * The task runs indefinitely and is responsible for controlling the motor's stepping behavior 
- * based on the current motor state.
- * 
- * @param pvParameters Pointer to the instance of `A4988Manager`, representing the motor being controlled.
- * 
- * @note The task uses the `motor->_interval` for controlling the delay between each step. The task 
- *       checks the motor's `StopFlag` to determine whether to continue normal stepping or step 
- *       a set number of pulses before waiting for the stop time.
- * 
- * @see A4988Manager::SetStopFlag For setting the stop flag and controlling the stepping behavior.
+ * @brief Task for controlling the stepping of the motor.
+ *
+ * This function runs in a FreeRTOS task loop and controls the stepping of the motor connected
+ * to the specified step pin. It monitors a sensor pin for a rising edge signal to trigger
+ * the motor to pause for a specified stop time. The motor continues stepping normally unless
+ * a rising edge is detected, in which case the stop flag is set, and the motor steps for a specified
+ * number of pulses before pausing. After completing the pause, the motor resumes normal stepping.
+ *
+ * The behavior of the motor differs depending on the motor's number:
+ * - For motor 0 (`motor->_Number == false`), the motor steps continuously with no additional logic.
+ * - For motor 1 (`motor->_Number == true`), the motor checks for a rising edge on the sensor pin.
+ *   - When a rising edge is detected, the motor pauses after completing a set number of steps.
+ *   - After the pause, the motor resumes normal stepping, unless the stop flag is set again.
+ *
+ * @param pvParameters A pointer to the A4988Manager instance that controls the motor.
+ *                     This parameter is passed to the task and provides access to motor-specific settings.
+ *
+ * @note The function runs continuously in a task, and the motor stepping is controlled by the
+ *       interval (`motor->_interval`) and stop time (`motor->StopTime`). The motor behavior can
+ *       be dynamically modified by setting the stop flag (`motor->_StopFlag`).
+ *
+ * @warning Ensure that the sensor pin used for rising edge detection (`SENSOR_PIN`) is connected
+ *          to the appropriate GPIO pin and that the sensor provides a clean rising edge signal.
  */
 void A4988Manager::motorStepTask(void *pvParameters) {
     A4988Manager* motor = static_cast<A4988Manager*>(pvParameters);
+    bool previousState = digitalRead(SENSOR_PIN);  // Initial pin state
 
     // Task loop for motor stepping
     while (true) {
-        if(!motor->_Number){
-            digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+
+        if (!motor->_Number) {
+            // Motor false behavior: Step signal LOW -> HIGH at specified interval
+            digitalWrite(motor->_stepPin, LOW);
             vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-            digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+            digitalWrite(motor->_stepPin, HIGH);
             vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
 
-        } else if(motor->_Number){
+        } else if (motor->_Number) {
+            // Monitor the sensor pin for rising edge detection
+            bool currentState = digitalRead(SENSOR_PIN);
+
+            // Detect rising edge (LOW -> HIGH)
+            if (previousState == LOW && currentState == HIGH) {
+                motor->SetStopFlag();  // Set the stop flag for motor
+            }
+
+            // Update previous state to current state for next loop
+            previousState = currentState;
+
             // If stop flag is not set, keep stepping continuously
             if (!motor->_StopFlag) {
-                digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+                digitalWrite(motor->_stepPin, LOW);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+                digitalWrite(motor->_stepPin, HIGH);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
             }
             // If stop flag is set, step for the specified number of pulses
             else {
                 int pulseCount = 0;
+
                 while (pulseCount < motor->stepsToTake) {
-                    digitalWrite(motor->_stepPin, LOW); // Step signal LOW
+                    digitalWrite(motor->_stepPin, LOW);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    digitalWrite(motor->_stepPin, HIGH); // Step signal HIGH
+                    digitalWrite(motor->_stepPin, HIGH);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    pulseCount++; // Increment pulse count
+                    pulseCount++;  // Increment pulse count
                 }
 
                 // Wait for the stop time before resuming normal stepping
                 vTaskDelay(motor->StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
 
-                motor->ResetStopFlag(); // Reset the stop flag to resume normal stepping
+                motor->ResetStopFlag();  // Reset the stop flag to resume normal stepping
             }
         }
     }
 }
+
 
 
 /**
