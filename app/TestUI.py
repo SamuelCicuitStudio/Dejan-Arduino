@@ -162,14 +162,12 @@ def connect_serial():
     try:
         ser = serial.Serial(port=comport.get(), baudrate=int(baudrate.get()), timeout=1)
         # Change connect button to green if successful
-        connect_button.config(bg='green')
         messagebox.showinfo("Connection Successful", "Serial connection established successfully.")
         
         # Request current state after successful connection
-        request_current_state()
+        
         
     except Exception as e:
-        connect_button.config(bg='red')
         messagebox.showerror("Error", f"Failed to connect to serial port: {e}")
 
 # Set up the main window
@@ -181,6 +179,10 @@ ttk.Label(root, text="Select COM Port:").grid(row=0, column=0, padx=10, pady=5)
 comport = ttk.Combobox(root, values=["COM1", "COM2", "COM3", "COM4", "COM5"])  # Modify as needed for your system
 comport.set("COM1")
 comport.grid(row=0, column=1, padx=10, pady=5)
+
+# Request State Button
+request_state_button = ttk.Button(root, text="Request State", command=request_current_state)
+request_state_button.grid(row=2, column=1, pady=10)
 
 ttk.Label(root, text="Select Baud Rate:").grid(row=1, column=0, padx=10, pady=5)
 baudrate = ttk.Combobox(root, values=[9600, 115200, 19200, 38400])  # Add more baud rates if needed
