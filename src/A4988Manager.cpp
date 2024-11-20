@@ -1,6 +1,16 @@
 #include "A4988Manager.h"
 #include <Arduino.h>
 
+volatile bool risingEdgeDetected = false;  // Flag to indicate a rising edge has been detected
+
+// Interrupt Service Routine (ISR) to detect rising edge
+void IRAM_ATTR risingEdgeISR() {
+    if(digitalRead(SENSOR_PIN)) {
+     risingEdgeDetected = true;  // Set the flag when rising edge is detected
+   }else {
+    risingEdgeDetected = false;
+    }
+}
 /**
  * @brief Constructor for the A4988Manager class
  * 
@@ -40,7 +50,7 @@ void A4988Manager::begin() {
     pinMode(_ms3Pin, OUTPUT);
     pinMode(_slpPin, OUTPUT);
     pinMode(_resetPin, OUTPUT);
-
+    attachInterrupt(digitalPinToInterrupt(SENSOR_PIN), risingEdgeISR, CHANGE);// interrupt for sensor pin
     Stop(); // Disable the driver
     digitalWrite(_slpPin, HIGH); // Wake up the driver
     Reset(); // Reset the driver
@@ -234,56 +244,36 @@ void A4988Manager::motorStepTask(void *pvParameters) {
             vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
 
         } else if (motor->_Number) {
-            // Monitor the sensor pin for rising edge detection
-            bool currentState = digitalRead(SENSOR_PIN);
-
-            // Detect rising edge (LOW -> HIGH)
-            if (previousState == LOW && currentState == HIGH) {
-                motor->SetStopFlag();  // Set the stop flag for motor
-
-                // Confirm we are out of the switching zone by making a few steps
-                for (int i = 0; i <= 200; i++) {
-                    digitalWrite(motor->_stepPin, LOW);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    digitalWrite(motor->_stepPin, HIGH);
-                    vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                }
-
-                // Wait for a debounce period to stabilize (10ms)
-                vTaskDelay(10 * portTICK_PERIOD_MS);
-            }
-
-            // Update previous state to current state for next loop
-            previousState = currentState;
-
-            // If stop flag is not set, keep stepping continuously
-            if (!motor->_StopFlag) {
+            while(true){
                 digitalWrite(motor->_stepPin, LOW);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
                 digitalWrite(motor->_stepPin, HIGH);
                 vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-            }
-            // If stop flag is set, step for the specified number of pulses
-            else {
-                int pulseCount = 0;
-
-                while (pulseCount < motor->stepsToTake) {
+                if(risingEdgeDetected) break;
+            };
+            // Detect rising edge (LOW -> HIGH)
+            if (risingEdgeDetected ) {
+                // Confirm we are out of the switching zone by making a few steps
+                for (int i = 0; i < motor->stepsToTake; i++) {
                     digitalWrite(motor->_stepPin, LOW);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
                     digitalWrite(motor->_stepPin, HIGH);
                     vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
-                    pulseCount++;  // Increment pulse count
-                }
-
-                // Wait for the stop time before resuming normal stepping
+                };
                 vTaskDelay(motor->StopTime * portTICK_PERIOD_MS);  // Wait for the stop time
 
-                motor->ResetStopFlag();  // Reset the stop flag to resume normal stepping
+            };
+            while(true){
+                digitalWrite(motor->_stepPin, LOW);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                digitalWrite(motor->_stepPin, HIGH);
+                vTaskDelay(motor->_interval / portTICK_PERIOD_MS);  // Wait for the next interval
+                if(!risingEdgeDetected) break;
+            }
+            
             }
         }
     }
-}
-
 
 
 
