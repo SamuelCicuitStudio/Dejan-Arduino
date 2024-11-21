@@ -48,8 +48,8 @@ def request_current_state():
 
     try:
         # Send command to request current state as JSON
-        ser.write(b'{"command": "GETSTATUS"}')
-        ser.flush()
+        command = json.dumps({"command": "GETSTATUS"})
+        send_command(command)
 
         # Wait for the response (ensure the response is complete)
         response = ser.readline().decode('utf-8').strip()
@@ -150,7 +150,7 @@ def send_sensor_command():
     
     command = json.dumps({
         "command": "sensor",
-        "stop": int(stop),
+        "stoptime": int(stop),
         "stepstotake": int(steps_to_take)
     })
     

@@ -88,8 +88,8 @@ void CommandReceiver::receiveCommand(const String& command) {
 
     } else if (strcmp(cmdType, "sensor") == 0) {
         // Ensure necessary sensor parameters are present
-        if (doc["key"].is<int>() && doc["stepstotake"].is<int>()) {
-            int stopTime = doc["stop"];
+        if (doc["stop"].is<int>() && doc["stepstotake"].is<int>()) {
+            int stopTime = doc["stoptime"];
             int stepsToTake = doc["stepstotake"];
 
             // Set sensor parameters
