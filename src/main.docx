@@ -1,0 +1,90 @@
+#include <Arduino.h>
+
+// Define the RX and TX pins for the Nextion display
+#define SCREEN_RXD_PIN 16
+#define SCREEN_TXD_PIN 17
+
+// Create a HardwareSerial object
+HardwareSerial mySerial(1);  // Using Serial1 (TX=17, RX=16 for ESP32)
+
+// Function to parse the response from the Nextion display and detect button press
+void processNextionResponse(String response) {
+    // Check if the response starts with "65 00" (start of a valid response)
+    if (response.startsWith("65 00")) {
+        // Convert the response string into an array of bytes
+        byte data[9];
+        int i = 0;
+        int index = 0;
+        
+        // Parse the hexadecimal string into byte array
+        while (index < response.length()) {
+            if (response.charAt(index) == ' ') {
+                index++;
+                continue;
+            }
+            data[i++] = strtol(response.substring(index, index + 2).c_str(), NULL, 16);
+            index += 2;
+        }
+
+        // Extract the button ID (4th byte in the data array)
+        byte buttonID = data[3];
+
+        // Handle each button ID by printing the corresponding button press
+        switch (buttonID) {
+            case 2:
+                Serial.println("Case Up button pressed");
+                break;
+            case 3:
+                Serial.println("Case Dir button pressed");
+                break;
+            case 4:
+                Serial.println("Case Down button pressed");
+                break;
+            case 10:
+                Serial.println("Start button pressed");
+                break;
+            case 11:
+                Serial.println("Stop button pressed");
+                break;
+            case 5:
+                Serial.println("Disk Up button pressed");
+                break;
+            case 6:
+                Serial.println("Disk Dir button pressed");
+                break;
+            case 7:
+                Serial.println("Disk Down button pressed");
+                break;
+            case 8:
+                Serial.println("Delay Up button pressed");
+                break;
+            case 9:
+                Serial.println("Delay Down button pressed");
+                break;
+            default:
+                Serial.println("Unknown button pressed");
+                break;
+        }
+    }
+}
+
+void setup() {
+    // Start the Serial Monitor for debugging
+    Serial.begin(115200);
+}
+
+void loop() {
+    // Check if there is data available from the Nextion display
+    if (Serial.available()) {
+        String response = "";
+        
+        // Read the incoming data from the Nextion display
+        while (Serial.available()) {
+            response += (char)Serial.read();
+            delay(10); // Delay to allow all data to be received
+        }
+
+        // Process the response to detect button press
+        processNextionResponse(response);
+    }
+}

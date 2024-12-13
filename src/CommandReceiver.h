@@ -15,6 +15,13 @@ public:
 
     // Check and process commands
     void checkCommand();
+        // Function to handle received command
+    void receiveCommand(const String& command);
+
+    // Set motor parameters based on received commands
+    void setMotorParameters(int motor, float speed, int microsteps, int direction );
+    void setSensorParameters(int motor,int stopTime, int stepsToTake);
+    void sendSystemStatus();
 
 private:
     // Static command buffer and received command flag
@@ -25,13 +32,6 @@ private:
     A4988Manager& _motor1;      // Declare _motor1 first
     A4988Manager& _motor2;      // Declare _motor2 second
 
-    // Function to handle received command
-    void receiveCommand(const String& command);
-
-    // Set motor parameters based on received commands
-    void setMotorParameters(int motor, float speed, int microsteps, int direction );
-    void setSensorParameters(int motor,int stopTime, int stepsToTake);
-    void sendSystemStatus();
 };
 
 #endif // COMMAND_RECEIVER_H
