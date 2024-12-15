@@ -43,6 +43,9 @@ private:
     void receiveCommand(const String& command);
     
     bool SYSTEM_ON;
+    // Microstepping factors
+    const int CASE_MICROSTEP = 1;
+    const int DISC_MICROSTEP = 8;
 };
 
 #endif // NEXTION_HMI_H

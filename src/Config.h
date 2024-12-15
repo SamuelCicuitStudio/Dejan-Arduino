@@ -43,6 +43,8 @@
 #define RESET_PIN_DISC      47     // Reset Pin for Stepper Motor (Disc)
 #define DEFAULT_FREQ  50
 #define STEP_CORE 0
+
+#define FULL_STEPS_PER_REV 200     // Constants for steps per revolution for NEMA 17 stepper motor
 // =========================================================================
 // Sensor and Communication Pin Definitions
 // =========================================================================
