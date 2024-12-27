@@ -24,6 +24,7 @@ void CommandReceiver::checkCommand() {
 
     // Process command if received
     if (commandReceived) {
+        Serial.println(commandBuffer);
         commandReceived = false; // Reset the flag
         receiveCommand(commandBuffer); // Call the receiveCommand function
     }
