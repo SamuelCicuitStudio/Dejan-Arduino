@@ -45,16 +45,12 @@ String NextionHMI::readResponse() {
     String response = "";
     while (mySerial->available()) {
         response += (char)mySerial->read();
-    };
-    Serial.println(response);
-    return exportToLineByLineString(response);
+    }
+    return response;
 }
 
-/**
- * @brief Reads the response from the Nextion HMI display.
- * @return The response string from the display.
- */
-String NextionHMI:: exportToLineByLineString(const String& input) {
+
+String NextionHMI:: exportToLineByLineString(String input) {
     String result = "";
 
     // Process each character in the input string

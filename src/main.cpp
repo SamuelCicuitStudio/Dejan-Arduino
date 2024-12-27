@@ -80,6 +80,8 @@ void loop() {
 
     String hmiResponse = nextionHMI->readResponse(); // Read response from HMI
     if (!hmiResponse.isEmpty()) {
+        Serial.println(hmiResponse);
+        Serial.println(nextionHMI->exportToLineByLineString(hmiResponse));
         nextionHMI->handleButtonPress(hmiResponse); // Handle button press from HMI
     }
 
