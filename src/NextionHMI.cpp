@@ -42,8 +42,6 @@ void NextionHMI::sendCommand(const String& command) {
  * @return The response string from the display.
  */
 String NextionHMI::readResponse() {
-    String response = "";
-
     // Read the entire response from the serial buffer
     String response = "";
     while (mySerial->available()) {
