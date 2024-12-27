@@ -76,7 +76,7 @@ void loop() {
     // ==================================================
     // Main Loop: Command and Status Handling
     // ==================================================
-    commandReceiver->checkCommand(); // Check and process received commands
+    //commandReceiver->checkCommand(); // Check and process received commands
 
     String hmiResponse = nextionHMI->readResponse(); // Read response from HMI
     if (!hmiResponse.isEmpty()) {

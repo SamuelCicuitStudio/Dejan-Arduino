@@ -21,9 +21,25 @@ NextionHMI::NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceive
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-    
+    const int INITIAL_BAUDRATE = 9600; // Default baud rate for most Nextion displays
+    const int NEXTION_BAUDRATE = 115200; // Desired baud rate
+
+    // Start communication at the default baud rate
+    mySerial->begin(INITIAL_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+
+    // Send command to change the baud rate
+    mySerial->print("baud=115200");
+    mySerial->write(0xFF);
+    mySerial->write(0xFF);
+    mySerial->write(0xFF);
+
+    // End communication with the initial baud rate
+    mySerial->end();
+
+    // Start communication with the new baud rate
     mySerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
 }
+
 
 /**
  * @brief Sends a command to the Nextion HMI display.
