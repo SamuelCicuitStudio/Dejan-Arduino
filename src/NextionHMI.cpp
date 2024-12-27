@@ -45,14 +45,10 @@ String NextionHMI::readResponse() {
     String response = "";
 
     // Read the entire response from the serial buffer
+    String response = "";
     while (mySerial->available()) {
-        char c = mySerial->read();
-        response += c;
-    }
-
-    // Trim any leading or trailing whitespace
-    response.trim();
-
+        response += (char)mySerial->read();
+    };
     // List of expected responses
     const String expectedResponses[] = {
         "CASE UP", "CASE DIR", "CASE DOWN",
