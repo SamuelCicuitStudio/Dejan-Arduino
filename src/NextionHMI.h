@@ -25,6 +25,7 @@ public:
     String readResponse();                    // Read the response from the Nextion HMI
     void handleButtonPress(const String &response);  // Handle button press responses
     void sendSystemStatus();
+    String exportToLineByLineString(const String& input);
 private:
     HardwareSerial* mySerial;  // Use HardwareSerial for communication
     String commandBuffer;      // Regular String for the command buffer

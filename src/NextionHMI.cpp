@@ -46,9 +46,26 @@ String NextionHMI::readResponse() {
     while (mySerial->available()) {
         response += (char)mySerial->read();
     }
-    return response;
+    return exportToLineByLineString(response);
 }
 
+
+String NextionHMI:: exportToLineByLineString(const String& input) {
+    String result = "";
+
+    // Process each character in the input string
+    for (size_t i = 0; i < input.length(); i++) {
+        char c = input[i];
+
+        // Only include printable ASCII characters (32 to 126, including space)
+        if (c >= 32 && c <= 126) {
+            result += c;      // Add the character to the result
+            result += '\n';   // Add a newline after each character
+        }
+    }
+
+    return result;
+}
 /**
  * @brief Handles button press events received from the Nextion HMI display.
  * @param response The response string identifying the button pressed.
