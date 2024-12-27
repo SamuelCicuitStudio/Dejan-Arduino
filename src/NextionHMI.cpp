@@ -21,8 +21,8 @@ NextionHMI::NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceive
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-
-    mySerial->begin(NEXTION_BAUDRATE,SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    
+    mySerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
 }
 
 /**

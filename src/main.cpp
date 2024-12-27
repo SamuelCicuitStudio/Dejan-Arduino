@@ -30,7 +30,7 @@ SDCardManager* SDcard = nullptr;         // Pointer to SD card manager
 CommandReceiver* commandReceiver = nullptr; // Pointer to command receiver instance
 NextionHMI* nextionHMI = nullptr;        // Pointer to Nextion HMI instance
 
-HardwareSerial* hmiSerial = &Serial2;    // Using Serial2 for HMI communication
+HardwareSerial hmiSerial(2);   // Using Serial2 for HMI communication
 
 void setup() {
     // ==================================================
@@ -68,7 +68,7 @@ void setup() {
     // ==================================================
     // Nextion HMI Initialization
     // ==================================================
-    nextionHMI = new NextionHMI(hmiSerial, commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
+    nextionHMI = new NextionHMI(&hmiSerial, commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
     nextionHMI->begin();
 }
 
