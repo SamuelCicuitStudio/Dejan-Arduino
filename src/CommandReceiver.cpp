@@ -12,6 +12,7 @@ CommandReceiver::CommandReceiver(Sensor* sensor, A4988Manager& motor1, A4988Mana
 // Initialize the receiver
 void CommandReceiver::begin() {
     Serial.begin(BAUDE_RATE); // Start serial communication
+    //while (!Serial);  // Wait for Serial to be ready (only needed for some ESP32 boards)
 }
 
 // Check and process commands if data is available

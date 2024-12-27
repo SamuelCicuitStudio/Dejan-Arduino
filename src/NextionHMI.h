@@ -5,6 +5,7 @@
 #include "Config.h"
 #include "A4988Manager.h" // Make sure to include the header for A4988Manager
 #include "CommandReceiver.h"
+#include <HardwareSerial.h>
 
 #define DEFAULT_CASE_SPEED 250
 #define DEFAULT_CASE_DIR false
@@ -15,10 +16,12 @@
 
 
 
+
+
 class NextionHMI {
 public:
     // Constructor to initialize with sensor and motors
-    NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2);
+    NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2);
 
     void begin();                             // Initialize UART for Nextion HMI
     void sendCommand(const String &command);  // Send a command to the Nextion HMI
@@ -27,7 +30,6 @@ public:
     void sendSystemStatus();
     String exportToLineByLineString(String input);
 private:
-    HardwareSerial* mySerial;  // Use HardwareSerial for communication
     String commandBuffer;      // Regular String for the command buffer
     bool commandReceived;      // Flag for received command
     CommandReceiver* cmdReceiver;            // Pointer to the Sensor

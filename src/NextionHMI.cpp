@@ -1,14 +1,16 @@
 #include "NextionHMI.h"
 
+HardwareSerial hmiSerial01 ( 2 );   // Using Serial2 for HMI communication
+
+
 /**
  * @brief Constructor for NextionHMI class.
- * @param mySerial Pointer to the HardwareSerial instance for UART communication.
  * @param commandReceiver Pointer to the CommandReceiver instance.
  * @param motor1 Reference to the A4988Manager for motor 1 control.
  * @param motor2 Reference to the A4988Manager for motor 2 control.
  */
-NextionHMI::NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2)
-    : mySerial(mySerial), cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false) {
+NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2)
+    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false) {
     CaseSpeed = DEFAULT_CASE_SPEED;
     DiscSpeed = DEFAULT_DISK_SPEED;
     Delay = DEFAULT_DELAY;
@@ -21,20 +23,19 @@ NextionHMI::NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceive
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-    // Start communication with the new baud rate
-    mySerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    hmiSerial01.begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    //while (!hmiSerial01);  // Wait for Serial to be ready (only needed for some ESP32 boards)
 }
-
 
 /**
  * @brief Sends a command to the Nextion HMI display.
  * @param command The command string to send.
  */
 void NextionHMI::sendCommand(const String& command) {
-    mySerial->print(command);
-    mySerial->write(0xFF);
-    mySerial->write(0xFF);
-    mySerial->write(0xFF);
+    hmiSerial01.print(command);
+    hmiSerial01.write(0xFF);
+    hmiSerial01.write(0xFF);
+    hmiSerial01.write(0xFF);
 }
 
 /**
@@ -43,29 +44,29 @@ void NextionHMI::sendCommand(const String& command) {
  */
 String NextionHMI::readResponse() {
     String response = "";
-    while (mySerial->available()) {
-        response += (char)mySerial->read();
+    while (hmiSerial01.available()) {
+        response += (char)hmiSerial01.read();
     }
     return response;
 }
 
-
-String NextionHMI:: exportToLineByLineString(String input) {
+/**
+ * @brief Converts input string to line-by-line format.
+ * @param input The input string to convert.
+ * @return The formatted output string with new lines after each printable character.
+ */
+String NextionHMI::exportToLineByLineString(String input) {
     String result = "";
-
-    // Process each character in the input string
     for (size_t i = 0; i < input.length(); i++) {
         char c = input[i];
-
-        // Only include printable ASCII characters (32 to 126, including space)
-        if (c >= 32 && c <= 126) {
+        if (c >= 32 && c <= 126) {  // Include printable ASCII characters
             result += c;      // Add the character to the result
             result += '\n';   // Add a newline after each character
         }
     }
-
     return result;
 }
+
 /**
  * @brief Handles button press events received from the Nextion HMI display.
  * @param response The response string identifying the button pressed.
@@ -76,17 +77,20 @@ void NextionHMI::handleButtonPress(const String& response) {
         CaseSpeed++;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
-    } else if (response == "CASE DIR") {
+    } 
+    else if (response == "CASE DIR") {
         Serial.println("Case direction button pressed");
         CaseDir = !CaseDir;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
-    } else if (response == "CASE DOWN") {
+    }
+    else if (response == "CASE DOWN") {
         Serial.println("Case down button pressed");
         CaseSpeed--;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
-    } else if (response == "START") {
+    }
+    else if (response == "START") {
         Serial.println("Start button pressed");
         SYSTEM_ON = true;  // Set system status to ON
         _motor1.Start();
@@ -96,7 +100,8 @@ void NextionHMI::handleButtonPress(const String& response) {
         _motor1.setFrequency(CaseSpeed);
         _motor2.setFrequency(DiscSpeed);
         sendSystemStatus();
-    } else if (response == "STOP") {
+    }
+    else if (response == "STOP") {
         Serial.println("Stop button pressed");
         SYSTEM_ON = false;  // Set system status to OFF
         _motor1.Stop();
@@ -104,29 +109,34 @@ void NextionHMI::handleButtonPress(const String& response) {
         _motor1.setFrequency(0.0);
         _motor2.setFrequency(0.0);
         sendSystemStatus();
-    } else if (response == "DISK UP") {
+    }
+    else if (response == "DISK UP") {
         Serial.println("Disk up button pressed");
         DiscSpeed++;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
-    } else if (response == "DISK DIR") {
+    }
+    else if (response == "DISK DIR") {
         Serial.println("Disk direction button pressed");
         DiscDir = !DiscDir;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
-    } else if (response == "DISK DOWN") {
+    }
+    else if (response == "DISK DOWN") {
         Serial.println("Disk down button pressed");
         DiscSpeed--;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
-    } else if (response == "DELAY UP") {
+    }
+    else if (response == "DELAY UP") {
         Serial.println("Delay up button pressed");
-        Delay+= 100;
+        Delay += 100;
         cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
         sendSystemStatus();
-    } else if (response == "DELAY DOWN") {
+    }
+    else if (response == "DELAY DOWN") {
         Serial.println("Delay down button pressed");
-        Delay-=100;
+        Delay -= 100;
         cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
         sendSystemStatus();
     }
@@ -146,8 +156,6 @@ void NextionHMI::receiveCommand(const String& command) {
  */
 void NextionHMI::sendSystemStatus() {
     if (SYSTEM_ON) {
-        
-
         // Effective steps per revolution for case and disc
         int caseStepsPerRev = FULL_STEPS_PER_REV * CASE_MICROSTEP;
         int discStepsPerRev = FULL_STEPS_PER_REV * DISC_MICROSTEP;
@@ -159,8 +167,9 @@ void NextionHMI::sendSystemStatus() {
         // Update Nextion display with calculated RPM values
         sendCommand("n1.val=" + String(caseRPM));  // Update case RPM
         sendCommand("n2.val=" + String(discRPM));  // Update disc RPM
-        sendCommand("n0.val=" + String(Delay/1000));    // Update delay
-    } else {
+        sendCommand("n0.val=" + String(Delay / 1000));    // Update delay
+    }
+    else {
         sendCommand("n1.val=0");  // Case speed off
         sendCommand("n2.val=0");  // Disc speed off
         sendCommand("n0.val=0");  // Delay off
