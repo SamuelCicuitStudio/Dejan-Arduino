@@ -43,11 +43,34 @@ void NextionHMI::sendCommand(const String& command) {
  */
 String NextionHMI::readResponse() {
     String response = "";
+
+    // Read the entire response from the serial buffer
     while (mySerial->available()) {
-        response += (char)mySerial->read();
+        char c = mySerial->read();
+        response += c;
     }
-    return response;
+
+    // Trim any leading or trailing whitespace
+    response.trim();
+
+    // List of expected responses
+    const String expectedResponses[] = {
+        "CASE UP", "CASE DIR", "CASE DOWN",
+        "START", "STOP",
+        "DISK UP", "DISK DIR", "DISK DOWN",
+        "DELAY UP", "DELAY DOWN"
+    };
+
+    // Check if any expected response is present in the received string
+    for (const String& expected : expectedResponses) {
+        if (response.indexOf(expected) != -1) { // Keyword found in the response
+            return expected; // Return the matched keyword
+        }
+    }
+
+    return ""; // Return an empty string if no keyword is found
 }
+
 
 /**
  * @brief Handles button press events received from the Nextion HMI display.
