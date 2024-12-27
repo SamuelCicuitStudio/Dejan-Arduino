@@ -22,7 +22,6 @@ NextionHMI::NextionHMI(HardwareSerial* mySerial, CommandReceiver* commandReceive
  */
 void NextionHMI::begin() {
     const int INITIAL_BAUDRATE = 9600; // Default baud rate for most Nextion displays
-    const int NEXTION_BAUDRATE = 115200; // Desired baud rate
 
     // Start communication at the default baud rate
     mySerial->begin(INITIAL_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
