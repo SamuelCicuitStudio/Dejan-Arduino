@@ -38,6 +38,12 @@ void setup() {
     // Serial Communication Setup
     // ==================================================
     Serial.begin(BAUDE_RATE); // Initialize serial communication with the defined baud rate
+    while (!Serial) {
+    ; // Wait for serial to connect
+    }
+    // Initialize Nextion serial communication
+    nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    Serial.println("ESP32 Ready. Listening to Nextion Display...");
     pinMode(FLAG_LED_PIN, OUTPUT);
     digitalWrite(FLAG_LED_PIN, HIGH);
 
@@ -64,13 +70,13 @@ void setup() {
     sensor->begin();                     // Initialize sensor
 
     commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver
-    commandReceiver->begin();            // Initialize command receiver
+    //commandReceiver->begin();            // Initialize command receiver
 
     // ==================================================
     // Nextion HMI Initialization
     // ==================================================
     nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor,&nextionSerial); // Create Nextion HMI instance
-    nextionHMI->begin();
+    //nextionHMI->begin();
 }
 
 void loop() {

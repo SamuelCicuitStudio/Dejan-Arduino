@@ -22,7 +22,7 @@ NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-    hmiSerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    //hmiSerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
     //while (!hmiSerial01);  // Wait for Serial to be ready (only needed for some ESP32 boards)
 }
 
