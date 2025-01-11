@@ -5,6 +5,8 @@
 #include "config.h"
 #include "SDCardManager.h"
 #include "NextionHMI.h"
+#include <HardwareSerial.h>
+HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
 
 // ==================================================
 // Motor Instances
@@ -42,7 +44,7 @@ void setup() {
     ; // Wait for serial to connect
     }
     // Initialize Nextion serial communication
-    Serial1.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
     Serial.println("ESP32 Ready. Listening to Nextion Display...");
     pinMode(FLAG_LED_PIN, OUTPUT);
     digitalWrite(FLAG_LED_PIN, HIGH);
@@ -76,7 +78,7 @@ void setup() {
     // Nextion HMI Initialization
     // ==================================================
     nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
-    nextionHMI->begin();
+    //nextionHMI->begin();
 }
 
 void loop() {
@@ -85,11 +87,12 @@ void loop() {
     // ==================================================
     // Check if data is available from Nextion display
     char processedData;
-    if (Serial1.available()) {
+    if (nextionSerial.available()) {
         // Read the data from the Nextion display
         String receivedData = "";
-        while (Serial1.available()) {
-        char c = Serial1.read();
+        while (nextionSerial.available()) {
+        char c = nextionSerial.read();
+        nextionSerial.println(c);
         receivedData += c;
         }
 

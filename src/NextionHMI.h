@@ -5,7 +5,7 @@
 #include "Config.h"
 #include "A4988Manager.h" // Make sure to include the header for A4988Manager
 #include "CommandReceiver.h"
-#include <HardwareSerial.h>
+
 
 #define DEFAULT_CASE_SPEED 250
 #define DEFAULT_CASE_DIR false
