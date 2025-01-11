@@ -61,19 +61,18 @@ String NextionHMI::readResponse() {
             processedData == 'E' || processedData == 'F' || processedData == 'G' ||
             processedData == 'S' || processedData == 'P' || processedData == 'I' ||
             processedData == 'H') {
-            // Log the processed data to the Serial Monitor
-            //Serial.println("Received from Nextion:");
-            //Serial.println(processedData);
             // Return the complete response string
             return response;
         } else {
-            //Serial.println("Received an unsupported character.");
+            // Return an empty string for unsupported characters
+            return "";
         }
-    } else {
-        //Serial.println("Received data is too short to process.");
     }
 
+    // Return an empty string if the response is too short
+    return "";
 }
+
 
 
 /**
