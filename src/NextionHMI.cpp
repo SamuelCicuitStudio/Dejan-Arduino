@@ -1,6 +1,5 @@
 #include "NextionHMI.h"
 
-HardwareSerial hmiSerial01 ( 2 );   // Using Serial2 for HMI communication
 
 
 /**
@@ -9,8 +8,8 @@ HardwareSerial hmiSerial01 ( 2 );   // Using Serial2 for HMI communication
  * @param motor1 Reference to the A4988Manager for motor 1 control.
  * @param motor2 Reference to the A4988Manager for motor 2 control.
  */
-NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2)
-    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false) {
+NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2,HardwareSerial* hmiSerial)
+    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false), hmiSerial(hmiSerial) {
     CaseSpeed = DEFAULT_CASE_SPEED;
     DiscSpeed = DEFAULT_DISK_SPEED;
     Delay = DEFAULT_DELAY;
@@ -23,7 +22,7 @@ NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-    hmiSerial01.begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    hmiSerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
     //while (!hmiSerial01);  // Wait for Serial to be ready (only needed for some ESP32 boards)
 }
 
@@ -32,10 +31,10 @@ void NextionHMI::begin() {
  * @param command The command string to send.
  */
 void NextionHMI::sendCommand(const String& command) {
-    hmiSerial01.print(command);
-    hmiSerial01.write(0xFF);
-    hmiSerial01.write(0xFF);
-    hmiSerial01.write(0xFF);
+    hmiSerial->print(command);
+    hmiSerial->write(0xFF);
+    hmiSerial->write(0xFF);
+    hmiSerial->write(0xFF);
 }
 
 /**
@@ -46,8 +45,8 @@ String NextionHMI::readResponse() {
     String response = "";
 
     // Check if data is available from the Nextion HMI serial interface
-    while (hmiSerial01.available()) {
-        char c = hmiSerial01.read();
+    while (hmiSerial->available()) {
+        char c = hmiSerial->read();
         response += c;
     }
 

@@ -22,6 +22,8 @@ A4988Manager caseMotor(
     SLP_PIN_CASE, RESET_PIN_CASE, false // Motor type 1 stepping linked to sensor
 );
 
+HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
+
 // ==================================================
 // Object Pointers
 // ==================================================
@@ -54,7 +56,7 @@ void setup() {
     } else {
         Serial.println("Failed to initialize SD card.");
     }
-
+    delay(5000);
     // ==================================================
     // Sensor and Command Receiver Initialization
     // ==================================================
@@ -67,7 +69,7 @@ void setup() {
     // ==================================================
     // Nextion HMI Initialization
     // ==================================================
-    nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
+    nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor,&nextionSerial); // Create Nextion HMI instance
     nextionHMI->begin();
 }
 

@@ -71,6 +71,7 @@
   "files.associations": {
     "*.ndjson": "jsonl",
     "*.dbclient-js": "javascript",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "*.tcc": "cpp"
   }
 }
