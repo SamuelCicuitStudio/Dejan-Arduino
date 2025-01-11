@@ -8,8 +8,8 @@
  * @param motor1 Reference to the A4988Manager for motor 1 control.
  * @param motor2 Reference to the A4988Manager for motor 2 control.
  */
-NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2,HardwareSerial* hmiSerial)
-    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false), hmiSerial(hmiSerial) {
+NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2)
+    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false) {
     CaseSpeed = DEFAULT_CASE_SPEED;
     DiscSpeed = DEFAULT_DISK_SPEED;
     Delay = DEFAULT_DELAY;
@@ -22,8 +22,8 @@ NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A
  * @brief Initializes the UART communication with the Nextion HMI display.
  */
 void NextionHMI::begin() {
-    //hmiSerial->begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
-    //while (!hmiSerial01);  // Wait for Serial to be ready (only needed for some ESP32 boards)
+    Serial1.begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    while (!Serial1);  // Wait for Serial to be ready (only needed for some ESP32 boards)
 }
 
 /**
@@ -31,10 +31,10 @@ void NextionHMI::begin() {
  * @param command The command string to send.
  */
 void NextionHMI::sendCommand(const String& command) {
-    hmiSerial->print(command);
-    hmiSerial->write(0xFF);
-    hmiSerial->write(0xFF);
-    hmiSerial->write(0xFF);
+    Serial1.print(command);
+    Serial1.write(0xFF);
+    Serial1.write(0xFF);
+    Serial1.write(0xFF);
 }
 
 /**
@@ -45,8 +45,8 @@ String NextionHMI::readResponse() {
     String response = "";
 
     // Check if data is available from the Nextion HMI serial interface
-    while (hmiSerial->available()) {
-        char c = hmiSerial->read();
+    while (Serial1.available()) {
+        char c = Serial1.read();
         response += c;
     }
 

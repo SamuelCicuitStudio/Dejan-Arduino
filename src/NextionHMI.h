@@ -21,7 +21,7 @@
 class NextionHMI {
 public:
     // Constructor to initialize with sensor and motors
-    NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2,HardwareSerial* hmiSerial);
+    NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2);
 
     void begin();                             // Initialize UART for Nextion HMI
     void sendCommand(const String &command);  // Send a command to the Nextion HMI
@@ -35,7 +35,7 @@ private:
     CommandReceiver* cmdReceiver;            // Pointer to the Sensor
     A4988Manager& _motor1;     // Reference to motor 1
     A4988Manager& _motor2;     // Reference to motor 2
-    HardwareSerial* hmiSerial;
+
 
     uint16_t CaseSpeed;
     uint16_t DiscSpeed;

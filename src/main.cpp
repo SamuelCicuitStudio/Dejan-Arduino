@@ -22,7 +22,7 @@ A4988Manager caseMotor(
     SLP_PIN_CASE, RESET_PIN_CASE, false // Motor type 1 stepping linked to sensor
 );
 
-HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
+
 
 // ==================================================
 // Object Pointers
@@ -42,7 +42,7 @@ void setup() {
     ; // Wait for serial to connect
     }
     // Initialize Nextion serial communication
-    nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    Serial1.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
     Serial.println("ESP32 Ready. Listening to Nextion Display...");
     pinMode(FLAG_LED_PIN, OUTPUT);
     digitalWrite(FLAG_LED_PIN, HIGH);
@@ -75,8 +75,8 @@ void setup() {
     // ==================================================
     // Nextion HMI Initialization
     // ==================================================
-    nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor,&nextionSerial); // Create Nextion HMI instance
-    //nextionHMI->begin();
+    nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
+    nextionHMI->begin();
 }
 
 void loop() {
