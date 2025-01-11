@@ -43,7 +43,7 @@ void NextionHMI::sendCommand(const String& command) {
  */
 String NextionHMI::readResponse() {
 
-if(Serial1.available()) {   
+if(true) {   
         String receivedData = "";
         // Check if data is available from the Nextion HMI serial interface
         while (Serial1.available()) {
@@ -62,8 +62,8 @@ if(Serial1.available()) {
             processedData == 'D' || processedData == 'H' || processedData == 'I' ||
             processedData == 'S' || processedData == 'P') {
                 // Return the complete response string
-                Serial.println("Received from Nextion:");
-                Serial.println(processedData);
+                //Serial.println("Received from Nextion:");
+                //Serial.println(processedData);
                 return String(processedData);
             } else {
                 // Return an empty string for unsupported characters
