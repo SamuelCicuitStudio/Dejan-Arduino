@@ -5,8 +5,6 @@
 #include "config.h"
 #include "SDCardManager.h"
 #include "NextionHMI.h"
-#include <HardwareSerial.h>
-HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
 
 // ==================================================
 // Motor Instances
@@ -24,7 +22,7 @@ A4988Manager caseMotor(
     SLP_PIN_CASE, RESET_PIN_CASE, false // Motor type 1 stepping linked to sensor
 );
 
-
+HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
 
 // ==================================================
 // Object Pointers
@@ -44,7 +42,7 @@ void setup() {
     ; // Wait for serial to connect
     }
     // Initialize Nextion serial communication
-    nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+    Serial1.begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
     Serial.println("ESP32 Ready. Listening to Nextion Display...");
     pinMode(FLAG_LED_PIN, OUTPUT);
     digitalWrite(FLAG_LED_PIN, HIGH);
@@ -78,45 +76,16 @@ void setup() {
     // Nextion HMI Initialization
     // ==================================================
     nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
-    //nextionHMI->begin();
+    nextionHMI->begin();
 }
 
 void loop() {
     // ==================================================
     // Main Loop: Command and Status Handling
     // ==================================================
-    // Check if data is available from Nextion display
-    char processedData;
-    if (nextionSerial.available()) {
-        // Read the data from the Nextion display
-        String receivedData = "";
-        while (nextionSerial.available()) {
-        char c = nextionSerial.read();
-        nextionSerial.println(c);
-        receivedData += c;
-        }
-
-        // Ensure the received data has enough characters before processing
-        if (receivedData.length() > 4) {
-        // Extract the 5th character from the received data
-        processedData = receivedData.charAt(4);
-
-        // Check if the processed data matches any of the specified characters
-        if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
-            processedData == 'D' || processedData == 'H' || processedData == 'I' ||
-            processedData == 'S' || processedData == 'P') {
-            // Print the processed data to the Serial Monitor
-            Serial.println("Received from Nextion:");
-            Serial.println(processedData);
-        } else {
-            //Serial.println("Received an unsupported character.");
-        }
-        } else {
-        //Serial.println("Received data is too short to process.");
-        }
-    };
+    
     // Read response from HMI
-    String hmiResponse = String(processedData);
+    String hmiResponse = nextionHMI->readResponse();
     
 
     // Handle button press from HMI
@@ -141,4 +110,3 @@ void loop() {
 
     delay(1); // Small delay to avoid overwhelming the loop
 }
-
