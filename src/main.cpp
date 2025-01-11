@@ -97,7 +97,7 @@ void loop() {
             nextionHMI->sendSystemStatus();
         }
     } else {
-        Serial.println("No valid response received from HMI.");
+        //Serial.println("No valid response received from HMI.");
     }
 
     delay(1); // Small delay to avoid overwhelming the loop
