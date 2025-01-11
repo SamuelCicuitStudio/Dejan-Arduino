@@ -75,18 +75,29 @@ void loop() {
     // ==================================================
     // Main Loop: Command and Status Handling
     // ==================================================
-    //commandReceiver->checkCommand(); // Check and process received commands
+    
+    // Read response from HMI
+    String hmiResponse = nextionHMI->readResponse();
+    Serial.println(hmiResponse);
 
-    String hmiResponse = nextionHMI->readResponse(); // Read response from HMI
-    if (!hmiResponse.isEmpty()) {
-        Serial.println(hmiResponse);
-        nextionHMI->handleButtonPress(hmiResponse); // Handle button press from HMI
-    }
+    // Handle button press from HMI
+    nextionHMI->handleButtonPress(hmiResponse);
 
-    static unsigned long lastStatusUpdate = 0;
-    if (millis() - lastStatusUpdate >= 2000) { // Update system status every 2 seconds
-        nextionHMI->sendSystemStatus();
-        lastStatusUpdate = millis();
+    // Process the first character of the HMI response
+    if (hmiResponse.length() > 0) { // Ensure response is not empty
+        char processedData = hmiResponse.charAt(0);
+
+        // Check if the processed character matches any valid status commands
+        if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
+            processedData == 'E' || processedData == 'F' || processedData == 'G' ||
+            processedData == 'S' || processedData == 'P' || processedData == 'I' ||
+            processedData == 'H') {
+            
+            // Send system status to the HMI
+            nextionHMI->sendSystemStatus();
+        }
+    } else {
+        Serial.println("No valid response received from HMI.");
     }
 
     delay(1); // Small delay to avoid overwhelming the loop

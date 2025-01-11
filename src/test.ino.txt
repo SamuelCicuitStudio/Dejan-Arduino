@@ -1,0 +1,52 @@
+#include <HardwareSerial.h>
+
+#define SCREEN_RXD_PIN 4 // RX Pin for Display Communication
+#define SCREEN_TXD_PIN 5 // TX Pin for Display Communication
+
+HardwareSerial nextionSerial(1); // Use UART1 for communication with Nextion
+
+void setup() {
+  // Initialize serial communication with PC
+  Serial.begin(115200);
+  while (!Serial) {
+    ; // Wait for serial to connect
+  }
+  Serial.println("ESP32 Ready. Listening to Nextion Display...");
+
+  // Initialize Nextion serial communication
+  nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
+}
+
+void loop() {
+  // Check if data is available from Nextion display
+  if (nextionSerial.available()) {
+    // Read the data from the Nextion display
+    String receivedData = "";
+    while (nextionSerial.available()) {
+      char c = nextionSerial.read();
+      receivedData += c;
+    }
+
+    // Ensure the received data has enough characters before processing
+    if (receivedData.length() > 4) {
+      // Extract the 5th character from the received data
+      char processedData = receivedData.charAt(4);
+
+      // Check if the processed data matches any of the specified characters
+      if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
+          processedData == 'E' || processedData == 'F' || processedData == 'G' ||
+          processedData == 'S' || processedData == 'P' ||processedData == 'I' || processedData == 'H') {
+        // Print the processed data to the Serial Monitor
+        Serial.println("Received from Nextion:");
+        Serial.println(processedData);
+      } else {
+        //Serial.println("Received an unsupported character.");
+      }
+    } else {
+      //Serial.println("Received data is too short to process.");
+    }
+  }
+
+  // Small delay to prevent overloading the loop
+  delay(100);
+}

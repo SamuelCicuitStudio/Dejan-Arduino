@@ -44,11 +44,37 @@ void NextionHMI::sendCommand(const String& command) {
  */
 String NextionHMI::readResponse() {
     String response = "";
+
+    // Check if data is available from the Nextion HMI serial interface
     while (hmiSerial01.available()) {
-        response += (char)hmiSerial01.read();
+        char c = hmiSerial01.read();
+        response += c;
     }
-    return response;
+
+    // Process the response if it contains enough data
+    if (response.length() > 4) {
+        // Extract the 5th character from the response
+        char processedData = response.charAt(4);
+
+        // Check if the processed data matches any of the specified characters
+        if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
+            processedData == 'E' || processedData == 'F' || processedData == 'G' ||
+            processedData == 'S' || processedData == 'P' || processedData == 'I' ||
+            processedData == 'H') {
+            // Log the processed data to the Serial Monitor
+            //Serial.println("Received from Nextion:");
+            //Serial.println(processedData);
+            // Return the complete response string
+            return response;
+        } else {
+            //Serial.println("Received an unsupported character.");
+        }
+    } else {
+        //Serial.println("Received data is too short to process.");
+    }
+
 }
+
 
 /**
  * @brief Converts input string to line-by-line format.
@@ -72,25 +98,25 @@ String NextionHMI::exportToLineByLineString(String input) {
  * @param response The response string identifying the button pressed.
  */
 void NextionHMI::handleButtonPress(const String& response) {
-    if (response == "CASE UP") {
+    if (response == "A") {
         Serial.println("Case up button pressed");
         CaseSpeed++;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     } 
-    else if (response == "CASE DIR") {
+    else if (response == "B") {
         Serial.println("Case direction button pressed");
         CaseDir = !CaseDir;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
-    else if (response == "CASE DOWN") {
+    else if (response == "C") {
         Serial.println("Case down button pressed");
         CaseSpeed--;
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
-    else if (response == "START") {
+    else if (response == "S") {
         Serial.println("Start button pressed");
         SYSTEM_ON = true;  // Set system status to ON
         _motor1.Start();
@@ -101,7 +127,7 @@ void NextionHMI::handleButtonPress(const String& response) {
         _motor2.setFrequency(DiscSpeed);
         sendSystemStatus();
     }
-    else if (response == "STOP") {
+    else if (response == "P") {
         Serial.println("Stop button pressed");
         SYSTEM_ON = false;  // Set system status to OFF
         _motor1.Stop();
@@ -110,31 +136,31 @@ void NextionHMI::handleButtonPress(const String& response) {
         _motor2.setFrequency(0.0);
         sendSystemStatus();
     }
-    else if (response == "DISK UP") {
+    else if (response == "G") {
         Serial.println("Disk up button pressed");
         DiscSpeed++;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
-    else if (response == "DISK DIR") {
+    else if (response == "F") {
         Serial.println("Disk direction button pressed");
         DiscDir = !DiscDir;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
-    else if (response == "DISK DOWN") {
+    else if (response == "E") {
         Serial.println("Disk down button pressed");
         DiscSpeed--;
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
-    else if (response == "DELAY UP") {
+    else if (response == "H") {
         Serial.println("Delay up button pressed");
         Delay += 100;
         cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
         sendSystemStatus();
     }
-    else if (response == "DELAY DOWN") {
+    else if (response == "I") {
         Serial.println("Delay down button pressed");
         Delay -= 100;
         cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
