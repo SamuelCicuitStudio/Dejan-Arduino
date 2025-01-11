@@ -70,7 +70,7 @@ void setup() {
     sensor->begin();                     // Initialize sensor
 
     commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create command receiver
-    //commandReceiver->begin();            // Initialize command receiver
+    commandReceiver->begin();            // Initialize command receiver
 
     // ==================================================
     // Nextion HMI Initialization
