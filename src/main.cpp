@@ -32,6 +32,7 @@ SDCardManager* SDcard = nullptr;         // Pointer to SD card manager
 CommandReceiver* commandReceiver = nullptr; // Pointer to command receiver instance
 NextionHMI* nextionHMI = nullptr;        // Pointer to Nextion HMI instance
 
+String GetResponse() ;
 
 void setup() {
     // ==================================================
@@ -85,7 +86,7 @@ void loop() {
     // ==================================================
     
     // Read response from HMI
-    String hmiResponse = nextionHMI->readResponse();
+    String hmiResponse = GetResponse();
     
 
     // Handle button press from HMI
@@ -109,4 +110,38 @@ void loop() {
     }
 
     delay(1); // Small delay to avoid overwhelming the loop
+}
+
+String GetResponse() {
+  // Check if data is available from Nextion display
+  if (Serial1.available()) {
+    // Read the data from the Nextion display
+    String receivedData = "";
+    while (Serial1.available()) {
+      char c = Serial1.read();
+      receivedData += c;
+    }
+
+    // Ensure the received data has enough characters before processing
+    if (receivedData.length() > 4) {
+      // Extract the 5th character from the received data
+      char processedData = receivedData.charAt(4);
+
+      // Check if the processed data matches any of the specified characters
+      if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
+          processedData == 'D' || processedData == 'H' || processedData == 'I' ||
+          processedData == 'S' || processedData == 'P') {
+        // Print the processed data to the Serial Monitor
+        Serial.println("Received from Nextion:");
+        Serial.println(processedData);
+        return (String) processedData;
+      } else {
+        Serial.println("Received an unsupported character.");
+        return "";
+      }
+    } else {
+      Serial.println("Received data is too short to process.");
+    }
+  }
+  return "";
 }

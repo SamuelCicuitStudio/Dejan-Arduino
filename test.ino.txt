@@ -17,7 +17,7 @@ void setup() {
   nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
 }
 
-void loop() {
+String GetResponse() {
   // Check if data is available from Nextion display
   if (nextionSerial.available()) {
     // Read the data from the Nextion display
@@ -34,16 +34,16 @@ void loop() {
 
       // Check if the processed data matches any of the specified characters
       if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
-          processedData == 'E' || processedData == 'F' || processedData == 'G' ||
-          processedData == 'S' || processedData == 'P' ||processedData == 'I' || processedData == 'H') {
+          processedData == 'D' || processedData == 'H' || processedData == 'I' ||
+          processedData == 'S' || processedData == 'P') {
         // Print the processed data to the Serial Monitor
         Serial.println("Received from Nextion:");
         Serial.println(processedData);
       } else {
-        //Serial.println("Received an unsupported character.");
+        Serial.println("Received an unsupported character.");
       }
     } else {
-      //Serial.println("Received data is too short to process.");
+      Serial.println("Received data is too short to process.");
     }
   }
 
