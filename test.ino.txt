@@ -17,7 +17,7 @@ void setup() {
   nextionSerial.begin(9600, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
 }
 
-String GetResponse() {
+String loop() {
   // Check if data is available from Nextion display
   if (nextionSerial.available()) {
     // Read the data from the Nextion display
