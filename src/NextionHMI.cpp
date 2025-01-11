@@ -61,7 +61,9 @@ String NextionHMI::readResponse() {
             processedData == 'S' || processedData == 'P' || processedData == 'I' ||
             processedData == 'H') {
             // Return the complete response string
-            return response;
+            Serial.println("Received from Nextion:");
+            Serial.println(processedData);
+            return (String)processedData;
         } else {
             // Return an empty string for unsupported characters
             return "";
