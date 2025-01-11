@@ -108,5 +108,5 @@ void loop() {
         //Serial.println("No valid response received from HMI.");
     }
 
-    delay(1); // Small delay to avoid overwhelming the loop
+    delay(100); // Small delay to avoid overwhelming the loop
 }
