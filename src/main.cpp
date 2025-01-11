@@ -56,7 +56,7 @@ void setup() {
     } else {
         Serial.println("Failed to initialize SD card.");
     }
-    delay(5000);
+
     // ==================================================
     // Sensor and Command Receiver Initialization
     // ==================================================
@@ -80,7 +80,7 @@ void loop() {
     
     // Read response from HMI
     String hmiResponse = nextionHMI->readResponse();
-    Serial.println(hmiResponse);
+    
 
     // Handle button press from HMI
     nextionHMI->handleButtonPress(hmiResponse);
@@ -88,7 +88,7 @@ void loop() {
     // Process the first character of the HMI response
     if (hmiResponse.length() > 0) { // Ensure response is not empty
         char processedData = hmiResponse.charAt(0);
-
+        Serial.println(hmiResponse);
         // Check if the processed character matches any valid status commands
         if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
             processedData == 'E' || processedData == 'F' || processedData == 'G' ||
