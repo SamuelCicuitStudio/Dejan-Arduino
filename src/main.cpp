@@ -77,6 +77,7 @@ void setup() {
     // ==================================================
     nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
     nextionHMI->begin();
+    nextionHMI->InitMotorsParameters();//Init motor
 }
 
 void loop() {
@@ -84,6 +85,7 @@ void loop() {
     // Main Loop: Command and Status Handling
     // ==================================================
     readResponse();// get command from serial
+    //commandReceiver->checkCommand();
 }
 
    

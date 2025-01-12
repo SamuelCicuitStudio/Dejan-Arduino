@@ -163,3 +163,9 @@ void NextionHMI::sendSystemStatus() {
         sendCommand("n0.val=0");  // Delay off
     }
 }
+
+
+void NextionHMI::InitMotorsParameters(){
+    cmdReceiver->setMotorParameters(1,0,8,0);// Disc Motor
+    cmdReceiver->setMotorParameters(0,0,4,0);// Case Motor
+}
