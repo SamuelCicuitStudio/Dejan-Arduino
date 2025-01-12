@@ -106,6 +106,7 @@ void readResponse() {
                 // Check if the processed data matches any of the specified characters
             if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
                 processedData == 'D' || processedData == 'H' || processedData == 'I' ||
+                processedData == 'E' || processedData == 'F' || processedData == 'G' ||
                 processedData == 'S' || processedData == 'P') {
                     //Return the complete response string
                     Serial.println("Received from Nextion:");
