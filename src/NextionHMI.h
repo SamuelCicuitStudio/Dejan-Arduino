@@ -9,11 +9,12 @@
 
 #define DEFAULT_CASE_SPEED 250
 #define DEFAULT_CASE_DIR false
-#define DEFAULT_DISK_SPEED 500
+#define DEFAULT_DISK_SPEED 750
 #define DEFAULT_DISK_DIR false
 #define DEFAULT_DELAY 2000
 #define NEXTION_BAUDRATE 9600
-
+#define CASE_MICROSTEP 4
+#define DISC_MICROSTEP 8
 
 
 
@@ -29,6 +30,7 @@ public:
     void handleButtonPress(const String &response);  // Handle button press responses
     void sendSystemStatus();
     void InitMotorsParameters();
+    int calculateRPM(float pulseFrequency, int microsteps, int stepsPerRevolution);
     String exportToLineByLineString(String input);
 private:
     String commandBuffer;      // Regular String for the command buffer
@@ -48,9 +50,7 @@ private:
     void receiveCommand(const String& command);
     
     bool SYSTEM_ON;
-    // Microstepping factors
-    const int CASE_MICROSTEP = 1;
-    const int DISC_MICROSTEP = 8;
+
 };
 
 #endif // NEXTION_HMI_H

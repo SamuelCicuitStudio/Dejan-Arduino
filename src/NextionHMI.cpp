@@ -62,20 +62,20 @@ String NextionHMI::exportToLineByLineString(String input) {
 void NextionHMI::handleButtonPress(const String& response) {
     if (response == "A") {
         Serial.println("Case up button pressed");
-        CaseSpeed++;
-        cmdReceiver->setMotorParameters(1, CaseSpeed, 4, CaseDir);
+        CaseSpeed+=13;
+        cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     } 
     else if (response == "B") {
         Serial.println("Case direction button pressed");
         CaseDir = !CaseDir;
-        cmdReceiver->setMotorParameters(1, CaseSpeed, 4, CaseDir);
+        cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
     else if (response == "C") {
         Serial.println("Case down button pressed");
-        CaseSpeed--;
-        cmdReceiver->setMotorParameters(1, CaseSpeed, 4, CaseDir);
+        CaseSpeed-=13;
+        cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
     else if (response == "S") {
@@ -87,8 +87,8 @@ void NextionHMI::handleButtonPress(const String& response) {
         DiscSpeed = DEFAULT_DISK_SPEED;
         _motor1.setFrequency(CaseSpeed);
         _motor2.setFrequency(DiscSpeed);
-        cmdReceiver->setMotorParameters(1,0,8,0);// Disc Motor
-        cmdReceiver->setMotorParameters(0,0,4,0);// Case Motor
+        cmdReceiver->setMotorParameters(1,DEFAULT_DISK_SPEED,DISC_MICROSTEP,DiscDir);// Disc Motor
+        cmdReceiver->setMotorParameters(2,DEFAULT_CASE_SPEED,CASE_MICROSTEP,CaseDir);// Case Motor
         sendSystemStatus();
     }
     else if (response == "P") {
@@ -102,20 +102,20 @@ void NextionHMI::handleButtonPress(const String& response) {
     }
     else if (response == "G") {
         Serial.println("Disk up button pressed");
-        DiscSpeed++;
-        cmdReceiver->setMotorParameters(2, DiscSpeed, 8, DiscDir);
+        DiscSpeed+=26;
+        cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
     else if (response == "F") {
         Serial.println("Disk direction button pressed");
         DiscDir = !DiscDir;
-        cmdReceiver->setMotorParameters(2, DiscSpeed, 8, DiscDir);
+        cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
     else if (response == "E") {
         Serial.println("Disk down button pressed");
-        DiscSpeed--;
-        cmdReceiver->setMotorParameters(2, DiscSpeed, 8, DiscDir);
+        DiscSpeed-=26;
+        cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
     else if (response == "H") {
@@ -140,19 +140,25 @@ void NextionHMI::receiveCommand(const String& command) {
     commandBuffer = command;
     commandReceived = true;
 }
+/**
+ * @brief Calculate RPM from the given frequency
+ */
+int NextionHMI::calculateRPM(float pulseFrequency, int microsteps, int stepsPerRevolution) {
+    // Calculate RPM
+    float rpm = (pulseFrequency * 60) / (stepsPerRevolution * microsteps);
 
+    // Return the RPM as an integer
+    return static_cast<int>(rpm);
+}
 /**
  * @brief Sends the current system status to the Nextion HMI display.
  */
 void NextionHMI::sendSystemStatus() {
     if (SYSTEM_ON) {
-        // Effective steps per revolution for case and disc
-        int caseStepsPerRev = FULL_STEPS_PER_REV * CASE_MICROSTEP;
-        int discStepsPerRev = FULL_STEPS_PER_REV * DISC_MICROSTEP;
 
         // Calculate RPMs
-        int caseRPM = (CaseSpeed * 60000) / caseStepsPerRev;
-        int discRPM = (DiscSpeed * 60000) / discStepsPerRev;
+        int caseRPM =calculateRPM(CaseSpeed,CASE_MICROSTEP,FULL_STEPS_PER_REV);
+        int discRPM = calculateRPM(DiscSpeed,DISC_MICROSTEP,FULL_STEPS_PER_REV);
 
         // Update Nextion display with calculated RPM values
         sendCommand("n1.val=" + String(caseRPM));  // Update case RPM
@@ -168,6 +174,7 @@ void NextionHMI::sendSystemStatus() {
 
 
 void NextionHMI::InitMotorsParameters(){
-    cmdReceiver->setMotorParameters(1,0,8,0);// Disc Motor
-    cmdReceiver->setMotorParameters(0,0,4,0);// Case Motor
+    cmdReceiver->setMotorParameters(1, 0, CASE_MICROSTEP, CaseDir);
+    cmdReceiver->setMotorParameters(2, 0, DISC_MICROSTEP, DiscDir);
+
 }
