@@ -5,7 +5,7 @@
 #include "config.h"
 #include "SDCardManager.h"
 #include "NextionHMI.h"
-
+void readResponse();
 // ==================================================
 // Motor Instances
 // ==================================================
@@ -83,11 +83,42 @@ void loop() {
     // ==================================================
     // Main Loop: Command and Status Handling
     // ==================================================
-    if(Serial1.available()){ 
-        // Read response from HMI
-        String hmiResponse = nextionHMI->readResponse();
-        // Handle button press from HMI
-        nextionHMI->handleButtonPress(hmiResponse);
-        //delay(20); // Small delay to avoid overwhelming the loop
-    }
+    readResponse();// get command from serial
+}
+
+   
+void readResponse() {
+    // ==================================================
+    // readResponse: Command and Status Handling
+    // ================================================== 
+    while(Serial1.available()) {   
+            String receivedData = "";
+            // Check if data is available from the Nextion HMI serial interface
+            while (Serial1.available()) {
+                char c = Serial1.read();
+                receivedData += c;
+            };
+            // Process the response if it contains enough data
+            if (receivedData.length() > 4) {
+                // Extract the 5th character from the response
+                char processedData = receivedData.charAt(4);
+                // Check if the processed data matches any of the specified characters
+            if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
+                processedData == 'D' || processedData == 'H' || processedData == 'I' ||
+                processedData == 'S' || processedData == 'P') {
+                    //Return the complete response string
+                    Serial.println("Received from Nextion:");
+                    Serial.print(processedData);
+                    Serial.println();
+                    // Handle button press from HMI
+                    nextionHMI->handleButtonPress(String(processedData));
+                } else {
+                    // Return an empty string for unsupported characters
+                    return ;
+                }
+            }
+        };
+        delay(100); // Small delay to avoid overwhelming the loop
+        // Return an empty string if the response is too short
+        return ;
 }

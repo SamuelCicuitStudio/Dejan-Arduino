@@ -37,46 +37,6 @@ void NextionHMI::sendCommand(const String& command) {
     Serial1.write(0xFF);
 }
 
-/**
- * @brief Reads the response from the Nextion HMI display.
- * @return The response string from the display.
- */
-String NextionHMI::readResponse() {
-
-if(true) {   
-        String receivedData = "";
-        // Check if data is available from the Nextion HMI serial interface
-        while (Serial1.available()) {
-            char c = Serial1.read();
-            Serial.print(c);
-            receivedData += c;
-        }
-
-        // Process the response if it contains enough data
-        if (receivedData.length() > 4) {
-            // Extract the 5th character from the response
-            char processedData = receivedData.charAt(4);
-
-            // Check if the processed data matches any of the specified characters
-        if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
-            processedData == 'D' || processedData == 'H' || processedData == 'I' ||
-            processedData == 'S' || processedData == 'P') {
-                // Return the complete response string
-                //Serial.println("Received from Nextion:");
-                //Serial.println(processedData);
-                return String(processedData);
-            } else {
-                // Return an empty string for unsupported characters
-                return "";
-            }
-        }
-     }
-
-    // Return an empty string if the response is too short
-    return "";
-}
-
-
 
 /**
  * @brief Converts input string to line-by-line format.
