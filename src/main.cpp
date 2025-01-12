@@ -77,7 +77,6 @@ void setup() {
     // ==================================================
     nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor); // Create Nextion HMI instance
     nextionHMI->begin();
-    nextionHMI->InitMotorsParameters();//Init motor
 }
 
 void loop() {
