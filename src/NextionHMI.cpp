@@ -13,6 +13,7 @@ NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A
     CaseSpeed = DEFAULT_CASE_SPEED;
     DiscSpeed = DEFAULT_DISK_SPEED;
     Delay = DEFAULT_DELAY;
+    offset = DEFAULT_STEPS_TO_TAKE;
     CaseDir = DEFAULT_CASE_DIR;
     DiscDir = DEFAULT_DISK_DIR;
     SYSTEM_ON = false;  // Initialize system as OFF
@@ -125,14 +126,28 @@ void NextionHMI::handleButtonPress(const String& response) {
     else if (response == "H") {
         Serial.println("Delay up button pressed");
         Delay += 100;
-        cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
+        cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
     else if (response == "I") {
         Serial.println("Delay down button pressed");
         Delay -= 100;
          if(Delay<0)Delay =100;
-        cmdReceiver->setSensorParameters(2, Delay, DEFAULT_STEPS_TO_TAKE);
+        cmdReceiver->setSensorParameters(2, Delay, offset);
+        sendSystemStatus();
+    }
+    else if (response == "J") {
+        Serial.println("Offset down button pressed");
+        offset += 5;
+         if(offset<100)offset =100;
+        cmdReceiver->setSensorParameters(2, Delay, offset);
+        sendSystemStatus();
+    }
+    else if (response == "K") {
+        Serial.println("Offset down button pressed");
+        offset -= 5;
+         if(offset<100)offset =100;
+        cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
 }
@@ -169,11 +184,13 @@ void NextionHMI::sendSystemStatus() {
         sendCommand("n1.val=" + String(caseRPM));  // Update case RPM
         sendCommand("n2.val=" + String(discRPM));  // Update disc RPM
         sendCommand("n0.val=" + String(Delay));    // Update delay
+        sendCommand("n3.val=" + String(offset));    // Update delay
     }
     else {
         sendCommand("n1.val=0");  // Case speed off
         sendCommand("n2.val=0");  // Disc speed off
         sendCommand("n0.val=0");  // Delay off
+        sendCommand("n3.val=0"); // offset off
     }
 }
 

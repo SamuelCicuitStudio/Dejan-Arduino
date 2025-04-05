@@ -12,6 +12,7 @@
 #define DEFAULT_DISK_SPEED 750
 #define DEFAULT_DISK_DIR false
 #define DEFAULT_DELAY 2000
+#define DEFAULT_OFFSET 2000
 #define NEXTION_BAUDRATE 9600
 #define CASE_MICROSTEP 4
 #define DISC_MICROSTEP 8
@@ -43,6 +44,7 @@ private:
     uint16_t CaseSpeed;
     uint16_t DiscSpeed;
     uint16_t Delay;
+    uint16_t offset;
     bool CaseDir;
     bool DiscDir;
 

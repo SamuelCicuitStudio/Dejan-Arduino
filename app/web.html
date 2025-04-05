@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stepper Controller UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      width: 480px;
+      height: 320px;
+      background: #333;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 8px;
+      box-sizing: border-box;
+      gap: 8px;
+    }
+    .display {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      font-size: 16px;
+      background-color: #444;
+      padding: 8px;
+      border-radius: 8px;
+      gap: 8px;
+      text-align: center;
+    }
+    .display div {
+      background: #222;
+      border-radius: 6px;
+      padding: 5px 0;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .section {
+      background-color: #444;
+      padding: 8px;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      justify-items: center;
+      align-items: center;
+    }
+    .section-title {
+      grid-column: span 3;
+      text-align: center;
+      font-weight: bold;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 18px;
+      background: #666;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:active {
+      background: #888;
+    }
+    .footer-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .start-btn {
+      background-color: green;
+      color: white;
+    }
+    .stop-btn {
+      background-color: red;
+      color: white;
+    }
+    .start-btn:hover {
+      background-color: #4CAF50;
+    }
+    .stop-btn:hover {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="display">
+      <div>Case RPM:<br/><span id="caseRpm">0000</span></div>
+      <div>Disc RPM:<br/><span id="discRpm">0000</span></div>
+      <div>Delay (ms):<br/><span id="delayMs">0000</span></div>
+      <div>Offset (steps):<br/><span id="offsetSteps">0000</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="section">
+        <div class="section-title">Case Rpm & Dir</div>
+        <button onclick="changeRPM('case', 1)">&#9650;</button>
+        <button onclick="toggleDirection('case')"><i class="fas fa-sync-alt"></i></button>
+        <button onclick="changeRPM('case', -1)">&#9660;</button>
+      </div>
+      <div class="section">
+        <div class="section-title">Disc Rpm & Dir</div>
+        <button onclick="changeRPM('disc', 1)">&#9650;</button>
+        <button onclick="toggleDirection('disc')"><i class="fas fa-sync-alt"></i></button>
+        <button onclick="changeRPM('disc', -1)">&#9660;</button>
+      </div>
+    </div>
+
+    <div class="footer-controls">
+      <button class="start-btn" onclick="startMotors()">Start</button>
+      <button class="stop-btn" onclick="stopMotors()">Stop</button>
+      <button onclick="adjustDelay(1)">&#9650;Delay</button>
+      <button onclick="adjustDelay(-1)">&#9660;Delay</button>
+      <button onclick="adjustOffset(1)">&#9650;Offset</button>
+      <button onclick="adjustOffset(-1)">&#9660;Offset</button>
+    </div>
+  </div>
+
+  <script>
+    let caseRpm = 0;
+    let discRpm = 0;
+    let delayMs = 0;
+    let offsetSteps = 0;
+
+    function updateDisplay() {
+      document.getElementById('caseRpm').textContent = caseRpm.toString().padStart(4, '0');
+      document.getElementById('discRpm').textContent = discRpm.toString().padStart(4, '0');
+      document.getElementById('delayMs').textContent = delayMs.toString().padStart(4, '0');
+      document.getElementById('offsetSteps').textContent = offsetSteps.toString().padStart(4, '0');
+    }
+
+    function changeRPM(motor, delta) {
+      if (motor === 'case') caseRpm = Math.max(0, caseRpm + delta);
+      if (motor === 'disc') discRpm = Math.max(0, discRpm + delta);
+      updateDisplay();
+    }
+
+    function toggleDirection(motor) {
+      alert(motor + ' direction toggled');
+    }
+
+    function adjustDelay(delta) {
+      delayMs = Math.max(0, delayMs + delta);
+      updateDisplay();
+    }
+
+    function adjustOffset(delta) {
+      offsetSteps = Math.max(0, offsetSteps + delta);
+      updateDisplay();
+    }
+
+    function startMotors() {
+      document.querySelector('.start-btn').style.backgroundColor = 'green';
+      document.querySelector('.stop-btn').style.backgroundColor = 'red';
+      alert('Motors started');
+    }
+
+    function stopMotors() {
+      document.querySelector('.start-btn').style.backgroundColor = '';
+      document.querySelector('.stop-btn').style.backgroundColor = '';
+      alert('Motors stopped');
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>

@@ -39,7 +39,7 @@ void setup() {
     // ==================================================
     Serial.begin(BAUDE_RATE); // Initialize serial communication with the defined baud rate
     while (!Serial) {
-    ; // Wait for serial to connect
+        ; // Wait for serial to connect
     }
     // Initialize Nextion serial communication
     Serial1.begin(NEXTION_BAUDRATE, SERIAL_8N1, SCREEN_RXD_PIN, SCREEN_TXD_PIN);
@@ -87,7 +87,6 @@ void loop() {
     //commandReceiver->checkCommand();
 }
 
-   
 void readResponse() {
     // ==================================================
     // readResponse: Command and Status Handling
@@ -107,7 +106,7 @@ void readResponse() {
             if (processedData == 'A' || processedData == 'B' || processedData == 'C' ||
                 processedData == 'D' || processedData == 'H' || processedData == 'I' ||
                 processedData == 'E' || processedData == 'F' || processedData == 'G' ||
-                processedData == 'S' || processedData == 'P') {
+                processedData == 'S' || processedData == 'P'|| processedData == 'J'|| processedData == 'K') {
                     //Return the complete response string
                     Serial.println("Received from Nextion:");
                     Serial.print(processedData);
