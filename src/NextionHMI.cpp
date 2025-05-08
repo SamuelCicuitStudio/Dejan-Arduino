@@ -8,15 +8,15 @@
  * @param motor1 Reference to the A4988Manager for motor 1 control.
  * @param motor2 Reference to the A4988Manager for motor 2 control.
  */
-NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2)
-    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false) {
-    CaseSpeed = DEFAULT_CASE_SPEED;
-    DiscSpeed = DEFAULT_DISK_SPEED;
-    Delay = DEFAULT_DELAY;
-    offset = DEFAULT_STEPS_TO_TAKE;
-    CaseDir = DEFAULT_CASE_DIR;
-    DiscDir = DEFAULT_DISK_DIR;
-    SYSTEM_ON = false;  // Initialize system as OFF
+NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2,ConfigManager*Conf)
+    : cmdReceiver(commandReceiver), _motor1(motor1), _motor2(motor2), commandReceived(false),Conf(Conf) {
+        CaseSpeed = Conf->GetInt(CASE_RPM_KEY, CASE_RPM_DEFAULT);
+        DiscSpeed = Conf->GetInt(DISC_RPM_KEY, DISC_RPM_DEFAULT);
+        Delay     = Conf->GetInt(DELAY_MS_KEY, DELAY_MS_DEFAULT);
+        offset    = Conf->GetInt(OFFSET_STEPS_KEY, OFFSET_STEPS_DEFAULT);
+        CaseDir   = Conf->GetBool(CASE_DIR_KEY, CASE_DIR_DEFAULT);
+        DiscDir   = Conf->GetBool(DISC_DIR_KEY, DISC_DIR_DEFAULT);
+        SYSTEM_ON = false;  // Initialize system as OFF
 }
 
 /**
@@ -65,12 +65,14 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Case up button pressed");
         CaseSpeed+=13;
         if(CaseSpeed>1000)CaseSpeed =1000;
+        Conf->PutInt(CASE_RPM_KEY, CaseSpeed); 
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     } 
     else if (response == "B") {
         Serial.println("Case direction button pressed");
         CaseDir = !CaseDir;
+        Conf->PutBool(CASE_DIR_KEY, CaseDir); 
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
@@ -78,6 +80,7 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Case down button pressed");
         CaseSpeed-=13;
         if(CaseSpeed<100)CaseSpeed =100;
+        Conf->PutInt(CASE_RPM_KEY, CaseSpeed); 
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
@@ -86,8 +89,8 @@ void NextionHMI::handleButtonPress(const String& response) {
         SYSTEM_ON = true;  // Set system status to ON
         _motor1.Start();
         _motor2.Start();
-        CaseSpeed = DEFAULT_CASE_SPEED;
-        DiscSpeed = DEFAULT_DISK_SPEED;
+        CaseSpeed = Conf->GetInt(CASE_RPM_KEY, CASE_RPM_DEFAULT);;
+        DiscSpeed = Conf->GetInt(DISC_RPM_KEY, DISC_RPM_DEFAULT);;
         _motor1.setFrequency(CaseSpeed);
         _motor2.setFrequency(DiscSpeed);
         cmdReceiver->setMotorParameters(2,DEFAULT_DISK_SPEED,DISC_MICROSTEP,DiscDir);// Disc Motor
@@ -107,12 +110,14 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Disk up button pressed");
         DiscSpeed+=26;
         if(DiscSpeed>1000)DiscSpeed =1000;
+        Conf->PutInt(DISC_RPM_KEY, DiscSpeed);
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
     else if (response == "F") {
         Serial.println("Disk direction button pressed");
         DiscDir = !DiscDir;
+        Conf->PutBool(DISC_DIR_KEY, DiscDir);
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
@@ -120,12 +125,14 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Disk down button pressed");
         DiscSpeed-=26;
         if(DiscSpeed<100)DiscSpeed =100;
+        Conf->PutInt(DISC_RPM_KEY, DiscSpeed);
         cmdReceiver->setMotorParameters(2, DiscSpeed, DISC_MICROSTEP, DiscDir);
         sendSystemStatus();
     }
     else if (response == "H") {
         Serial.println("Delay up button pressed");
         Delay += 100;
+        Conf->PutInt(DELAY_MS_KEY, Delay);
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
@@ -133,6 +140,7 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Delay down button pressed");
         Delay -= 100;
          if(Delay<0)Delay =100;
+         Conf->PutInt(DELAY_MS_KEY, Delay);
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
@@ -140,12 +148,14 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Offset down button pressed");
         offset += 5;
          if(offset<100)offset =100;
+         Conf->PutInt(OFFSET_STEPS_KEY, offset);
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
     else if (response == "K") {
         Serial.println("Offset down button pressed");
         offset -= 5;
+        Conf->PutInt(OFFSET_STEPS_KEY, offset);
          if(offset<100)offset =100;
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();

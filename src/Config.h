@@ -1,6 +1,45 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// ==================================================
+// DEVICE Config Flags Name (Keys for ESP32 Preferences)
+// ==================================================
+
+// Motor Control keys
+#define DELAY_MS_KEY        "DLMSV"
+#define OFFSET_STEPS_KEY    "OFSTP"
+#define CASE_RPM_KEY        "CASRP"
+#define DISC_RPM_KEY        "DISRP"
+#define CASE_DIR_KEY        "CASDR"
+#define DISC_DIR_KEY        "DISDR"
+#define RESET_FLAG "RSTFL"
+
+
+// Default values
+#define DELAY_MS_DEFAULT      DEFAULT_DELAY
+#define OFFSET_STEPS_DEFAULT  DEFAULT_STEPS_TO_TAKE
+#define CASE_RPM_DEFAULT      DEFAULT_CASE_SPEED
+#define DISC_RPM_DEFAULT      DEFAULT_DISK_SPEED
+#define CASE_DIR_DEFAULT      DEFAULT_CASE_DIR
+#define DISC_DIR_DEFAULT      DEFAULT_DISK_DIR
+
+
+#define DEFAULT_CASE_SPEED 250
+#define DEFAULT_CASE_DIR false
+#define DEFAULT_DISK_SPEED 750
+#define DEFAULT_DISK_DIR false
+#define DEFAULT_DELAY 2000
+#define DEFAULT_OFFSET 2000
+#define NEXTION_BAUDRATE 9600
+#define CASE_MICROSTEP 4
+#define DISC_MICROSTEP 8
+
+// ==================================================
+// Debug print toggle
+// ==================================================
+#define ENABLE_SERIAL_DEBUG
+#define DEBUGMODE true
+#define CONFIG_PARTITION "config"
 // =========================================================================
 // Pin Definitions for Case Configuration
 // =========================================================================

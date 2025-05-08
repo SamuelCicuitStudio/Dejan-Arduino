@@ -5,25 +5,12 @@
 #include "Config.h"
 #include "A4988Manager.h" // Make sure to include the header for A4988Manager
 #include "CommandReceiver.h"
-
-
-#define DEFAULT_CASE_SPEED 250
-#define DEFAULT_CASE_DIR false
-#define DEFAULT_DISK_SPEED 750
-#define DEFAULT_DISK_DIR false
-#define DEFAULT_DELAY 2000
-#define DEFAULT_OFFSET 2000
-#define NEXTION_BAUDRATE 9600
-#define CASE_MICROSTEP 4
-#define DISC_MICROSTEP 8
-
-
-
+#include "ConfigManager.h"
 
 class NextionHMI {
 public:
     // Constructor to initialize with sensor and motors
-    NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2);
+    NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A4988Manager& motor2,ConfigManager*Conf);
 
     void begin();                             // Initialize UART for Nextion HMI
     void sendCommand(const String &command);  // Send a command to the Nextion HMI
@@ -39,7 +26,7 @@ private:
     CommandReceiver* cmdReceiver;            // Pointer to the Sensor
     A4988Manager& _motor1;     // Reference to motor 1
     A4988Manager& _motor2;     // Reference to motor 2
-
+    ConfigManager*Conf;
 
     uint16_t CaseSpeed;
     uint16_t DiscSpeed;
