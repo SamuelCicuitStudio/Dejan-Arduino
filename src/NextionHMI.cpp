@@ -140,15 +140,15 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Delay down button pressed");
         Delay -= 100;
          if(Delay<0)Delay =100;
-         Conf->PutInt(DELAY_MS_KEY, Delay);
+        Conf->PutInt(DELAY_MS_KEY, Delay);
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
     else if (response == "J") {
         Serial.println("Offset down button pressed");
         offset += 5;
-         if(offset<100)offset =100;
-         Conf->PutInt(OFFSET_STEPS_KEY, offset);
+         if(offset<0)offset = 0;
+        Conf->PutInt(OFFSET_STEPS_KEY, offset);
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
@@ -156,7 +156,7 @@ void NextionHMI::handleButtonPress(const String& response) {
         Serial.println("Offset down button pressed");
         offset -= 5;
         Conf->PutInt(OFFSET_STEPS_KEY, offset);
-         if(offset<100)offset =100;
+         if(offset<0)offset =0;
         cmdReceiver->setSensorParameters(2, Delay, offset);
         sendSystemStatus();
     }
