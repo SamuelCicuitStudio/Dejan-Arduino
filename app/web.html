@@ -94,6 +94,25 @@
     .stop-btn:hover {
       background-color: #f44336;
     }
+    /* Re-arranged the layout as per your request */
+    .top-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+    }
+    .top-controls > button {
+      width: 50%;
+    }
+    .bottom-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+    }
+    .bottom-controls > button {
+      width: 50%;
+    }
   </style>
 </head>
 <body>
@@ -105,6 +124,9 @@
       <div>Offset (steps):<br/><span id="offsetSteps">0000</span></div>
     </div>
 
+
+
+    <!-- Main control sections (Case Rpm & Dir, Disc Rpm & Dir) -->
     <div class="controls">
       <div class="section">
         <div class="section-title">Case Rpm & Dir</div>
@@ -119,13 +141,18 @@
         <button onclick="changeRPM('disc', -1)">&#9660;</button>
       </div>
     </div>
+    <!-- Top controls (Start, Delay, Offset) -->
+    <div class="top-controls">
 
-    <div class="footer-controls">
-      <button class="start-btn" onclick="startMotors()">Start</button>
-      <button class="stop-btn" onclick="stopMotors()">Stop</button>
       <button onclick="adjustDelay(1)">&#9650;Delay</button>
-      <button onclick="adjustDelay(-1)">&#9660;Delay</button>
+      <button class="start-btn" onclick="startMotors()">Start</button>
       <button onclick="adjustOffset(1)">&#9650;Offset</button>
+    </div>
+    <!-- Bottom controls (Stop, Delay, Offset) -->
+    <div class="bottom-controls">
+
+      <button onclick="adjustDelay(-1)">&#9660;Delay</button>
+      <button class="stop-btn" onclick="stopMotors()">Stop</button>
       <button onclick="adjustOffset(-1)">&#9660;Offset</button>
     </div>
   </div>
