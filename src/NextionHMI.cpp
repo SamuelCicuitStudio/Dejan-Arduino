@@ -76,6 +76,11 @@ void NextionHMI::handleButtonPress(const String& response) {
         cmdReceiver->setMotorParameters(1, CaseSpeed, CASE_MICROSTEP, CaseDir);
         sendSystemStatus();
     }
+    else if (response == "W") {
+        Serial.println("first time param update");
+        delay(200);
+        sendSystemStatus();
+    }
     else if (response == "C") {
         Serial.println("Case down button pressed");
         CaseSpeed-=13;

@@ -108,6 +108,7 @@ void setup() {
   nextionHMI = new NextionHMI(commandReceiver, caseMotor, discMotor, Config); // Create instance of Nextion HMI manager
   nextionHMI->begin();                             // Initialize the HMI manager
   Serial.println("System initialization complete ✅");  // Print message confirming all system components initialized
+  nextionHMI->sendSystemStatus();
 }
 
 void loop() {
@@ -136,7 +137,7 @@ void readResponse() {
           processedData == 'D' || processedData == 'H' || processedData == 'I' ||
           processedData == 'E' || processedData == 'F' || processedData == 'G' ||
           processedData == 'S' || processedData == 'P' || processedData == 'J' ||
-          processedData == 'K') {
+          processedData == 'K'|| processedData == 'W') {
 
         Serial.print("📨 Received from Nextion: ");   // Print received command for debugging
         Serial.println(processedData);
