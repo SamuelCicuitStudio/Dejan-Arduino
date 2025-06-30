@@ -19,14 +19,15 @@ NextionHMI::NextionHMI(CommandReceiver* commandReceiver, A4988Manager& motor1, A
 
     _motor1.setFrequency(CaseSpeed);
     _motor2.setFrequency(DiscSpeed);
-    cmdReceiver->setMotorParameters(2,DEFAULT_DISK_SPEED,DISC_MICROSTEP,DiscDir);// Disc Motor
-    cmdReceiver->setMotorParameters(1,DEFAULT_CASE_SPEED,CASE_MICROSTEP,CaseDir);// Case Motor
-        _motor1.Stop();
-        _motor2.Stop();
-        _motor1.setFrequency(0.0);
-        _motor2.setFrequency(0.0);
+    cmdReceiver->setMotorParameters(2,DiscSpeed,DISC_MICROSTEP,DiscDir);// Disc Motor
+    cmdReceiver->setMotorParameters(1,CaseSpeed,CASE_MICROSTEP,CaseDir);// Case Motor
+    cmdReceiver->setSensorParameters(2,Delay, offset);
+    _motor1.Stop();
+    _motor2.Stop();
+    _motor1.setFrequency(0.0);
+    _motor2.setFrequency(0.0);
 
-        SYSTEM_ON = false;  // Initialize system as OFF
+    SYSTEM_ON = false;  // Initialize system as OFF
 }
 
 /**

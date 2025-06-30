@@ -22,7 +22,7 @@ A4988Manager discMotor(
 A4988Manager caseMotor(
   STEP_PIN_CASE, DIR_PIN_CASE, ENABLE_PIN_CASE,
   MS01_PIN_CASE, MS02_PIN_CASE, MS03_PIN_CASE,
-  SLP_PIN_CASE, RESET_PIN_CASE, false // Motor type 1 (linked to sensor)
+  SLP_PIN_CASE, RESET_PIN_CASE, false // Motor type 1
 );
 
 HardwareSerial nextionSerial(1);  // Declare HardwareSerial object for Nextion display (UART1)
@@ -95,7 +95,6 @@ void setup() {
   sensor = new Sensor(SENSOR_PIN);         // Create instance of Sensor with the defined pin
   sensor->begin();                         // Initialize the sensor
   Serial.println("Sensor initialized ✅");  // Print message confirming the sensor is initialized
-
   Serial.println("Setting up Command Receiver 🎛️");  // Print message for command receiver setup
   commandReceiver = new CommandReceiver(sensor, caseMotor, discMotor); // Create instance of CommandReceiver
   commandReceiver->begin();                        // Initialize the command receiver
